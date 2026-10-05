@@ -79,7 +79,3 @@ cd nanis-kitchen && npm test
 ```
 
 16 checks, no model, no network. The one I am fondest of is `no step is a lone conjunction`.
-
-## Prize Categories
-
-<!-- List the partner categories you are entering, or delete this section. -->
