@@ -113,10 +113,22 @@ because there is no request.
 That is the difference I keep coming back to. Open innovation did not make this app *cheaper* than
 the closed version. It made a promise checkable that would otherwise have been a promise.
 
-## My Agent Session
+## How This Got Built
 
-<!-- TODO: save the session with DevRelay and embed it here with the agent_session tag, or link it.
-     See the challenge page for the exact Liquid tag. -->
+No agent-session embed on this one, so here is the trail instead.
+
+The parser was not designed up front; it was argued with. Every rule listed above exists because
+a test failed first. `tests/run.mjs` is readable as a changelog of everything I got wrong
+about how people talk about food:
+
+```bash
+git clone https://github.com/VanshajPoonia/nanis-kitchen
+cd nanis-kitchen && npm test
+```
+
+16 checks, no model, no network, runs in milliseconds. The one I am fondest of is
+`no step is a lone conjunction`, which exists because my first `and then` split produced a cooking
+step that was just the word **"And"**.
 
 ## Prize Categories
 
