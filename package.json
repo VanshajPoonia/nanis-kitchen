@@ -1,0 +1,12 @@
+{
+  "name": "nanis-kitchen",
+  "version": "1.0.0",
+  "description": "Turn a grandparent's voice memos into a printable family recipe book, entirely on your own laptop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "node tests/run.mjs"
+  },
+  "license": "MIT"
+}

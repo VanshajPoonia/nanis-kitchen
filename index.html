@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nani's Kitchen</title>
+<meta name="description" content="Turn a grandparent's voice memos into a printable family recipe book. Runs entirely on your laptop." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍲</text></svg>" />
+<link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">🍲</span><div><h1>Nani's Kitchen</h1><p>Voice memos in. Family recipe book out. Nothing leaves this laptop.</p></div></div>
+  <div class="engine" id="engineBadge" data-state="idle"><span class="dot"></span><span id="engineText">Model not loaded</span></div>
+</header>
+
+<main>
+  <section class="panel" id="setupPanel">
+    <h2>1. Pick the ear</h2>
+    <p class="hint">Whisper runs in this tab. Weights download once from the Hugging Face Hub, then stay in your browser cache. After that, airplane mode works fine.</p>
+    <div class="row">
+      <label>Model
+        <select id="modelSelect">
+          <option value="Xenova/whisper-tiny.en">whisper-tiny.en — fastest (~40 MB)</option>
+          <option value="Xenova/whisper-base.en" selected>whisper-base.en — balanced (~80 MB)</option>
+          <option value="Xenova/whisper-small.en">whisper-small.en — most accurate (~250 MB)</option>
+          <option value="Xenova/whisper-base">whisper-base — multilingual</option>
+        </select>
+      </label>
+      <label>Compute
+        <select id="deviceSelect">
+          <option value="auto" selected>Auto (WebGPU if available)</option>
+          <option value="webgpu">WebGPU</option>
+          <option value="wasm">CPU / WASM</option>
+        </select>
+      </label>
+      <button id="loadBtn" class="primary">Load model</button>
+    </div>
+    <div class="progress" id="progressWrap" hidden><div class="bar" id="progressBar"></div><span id="progressText"></span></div>
+  </section>
+
+  <section class="panel" id="inputPanel">
+    <h2>2. Feed it a memo</h2>
+    <div class="row">
+      <label class="filedrop" id="dropZone">
+        <input type="file" id="fileInput" accept="audio/*,video/*" hidden />
+        <strong>Drop a voice memo</strong>
+        <span>.m4a from an iPhone, .mp3, .wav, .ogg, WhatsApp voice notes</span>
+      </label>
+      <div class="or">or</div>
+      <div class="reccol">
+        <button id="recBtn" class="ghost">● Record here</button>
+        <span class="rectime" id="recTime">00:00</span>
+        <button id="demoBtn" class="ghost small">Use the sample memo</button>
+      </div>
+    </div>
+    <audio id="player" controls hidden></audio>
+    <div class="row">
+      <button id="transcribeBtn" class="primary" disabled>Transcribe</button>
+      <span class="stat" id="asrStat"></span>
+    </div>
+  </section>
+
+  <section class="panel" id="transcriptPanel" hidden>
+    <h2>3. What she actually said</h2>
+    <p class="hint">Edit freely. Whisper is good, but it has never met your grandmother.</p>
+    <textarea id="transcriptBox" rows="8" spellcheck="false"></textarea>
+    <div class="row">
+      <label>Structure with
+        <select id="structurerSelect">
+          <option value="rules" selected>Built-in parser (offline, instant)</option>
+          <option value="ollama">Local LLM via Ollama</option>
+        </select>
+      </label>
+      <select id="ollamaModel" hidden></select>
+      <button id="structureBtn" class="primary">Make a recipe card</button>
+      <span class="stat" id="structureStat"></span>
+    </div>
+  </section>
+
+  <section class="panel" id="cardPanel" hidden>
+    <h2>4. The recipe card</h2>
+    <div id="cardMount"></div>
+    <div class="row">
+      <button id="saveBtn" class="primary">Add to the book</button>
+      <button id="redoBtn" class="ghost">Start another memo</button>
+    </div>
+  </section>
+
+  <section class="panel" id="bookPanel">
+    <h2>The book <span class="count" id="bookCount">0</span></h2>
+    <p class="hint">Saved in this browser only. Export it to keep it, print it, or hand it over.</p>
+    <div id="bookMount" class="booklist"></div>
+    <div class="row">
+      <button id="exportMdBtn" class="ghost">Export Markdown</button>
+      <button id="exportHtmlBtn" class="ghost">Export printable book</button>
+      <button id="exportJsonBtn" class="ghost">Export JSON</button>
+      <button id="importBtn" class="ghost">Import JSON</button>
+      <input type="file" id="importInput" accept="application/json" hidden />
+      <button id="clearBtn" class="danger">Clear book</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Open weights: <a href="https://huggingface.co/openai/whisper-base" target="_blank" rel="noopener">OpenAI Whisper</a> (Apache-2.0) via <a href="https://github.com/huggingface/transformers.js" target="_blank" rel="noopener">transformers.js</a>. No API key, no server, no account. <a href="https://github.com/VanshajPoonia/nanis-kitchen" target="_blank" rel="noopener">Source</a>.</p>
+</footer>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
