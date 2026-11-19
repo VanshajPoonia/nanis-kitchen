@@ -1,4 +1,6 @@
-# Nani's Kitchen 🍲
+# RecipeMemo 🍲
+
+**Voice Memos to a Family Recipe Book.** Formerly called Nani's Kitchen.
 
 **Turn a grandparent's voice memos into a printable family recipe book. Entirely on your own laptop.**
 
@@ -6,7 +8,7 @@ My grandmother does not write recipes down. She has never written one down. What
 four-minute WhatsApp voice notes that start with "okay so today I am going to make" and end with an
 unrelated story about the coal fire. Those memos are the recipes. They are also the only copy.
 
-Nani's Kitchen takes those memos, transcribes them with **Whisper running inside the browser tab**,
+RecipeMemo takes those memos, transcribes them with **Whisper running inside the browser tab**,
 pulls out ingredients, method and the stories, and builds a recipe book you can print and hand over.
 
 No server. No API key. No account. The audio never leaves the machine.
