@@ -1,6 +1,8 @@
 // Spoken recipes are not written recipes. Nobody says "250 g all-purpose flour".
 // They say "about two cups of maida, maybe a little more if the dough feels dry".
 // This parser is tuned for that, and it keeps the asides instead of deleting them.
+import { conversionNote } from './measures.js';
+import { LANGUAGES } from './languages.js';
 
 const NUMBER_WORDS = {
   a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
@@ -269,7 +271,10 @@ export function recipeToMarkdown(r) {
   if (meta.length) lines.push(`*${meta.join(' · ')}*`, '');
   if (r.ingredients.length) {
     lines.push('### Ingredients', '');
-    r.ingredients.forEach((i) => lines.push(`- ${i.text}`));
+    r.ingredients.forEach((i) => {
+      const note = conversionNote(i.text);
+      lines.push(`- ${i.text}${note ? ` (${note})` : ''}`);
+    });
     lines.push('');
   }
   if (r.steps.length) {
@@ -280,6 +285,12 @@ export function recipeToMarkdown(r) {
   if (r.story.length) {
     lines.push('### In her words', '');
     r.story.forEach((s) => lines.push(`> ${s.text}`, ''));
+  }
+  const lang = LANGUAGES[r.original?.language];
+  if (lang && r.original.text) {
+    lines.push(`### In ${lang.name} (${lang.native})`, '');
+    if (r.titleOriginal) lines.push(`**${r.titleOriginal}**`, '');
+    lines.push(r.original.text, '');
   }
   return lines.join('\n');
 }
