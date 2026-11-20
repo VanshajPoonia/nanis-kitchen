@@ -137,6 +137,44 @@ audio { width: 100%; margin-top: .9rem; }
 }
 .bookitem .del:hover { color: var(--bad); }
 
+:lang(hi) { font-family: "Kohinoor Devanagari", "Noto Sans Devanagari", "Nirmala UI", "Mangal", sans-serif; }
+:lang(pa) { font-family: "Mukta Mahee", "Noto Sans Gurmukhi", "Gurmukhi MN", "Nirmala UI", "Raavi", sans-serif; }
+:lang(ta) { font-family: "Tamil Sangam MN", "Noto Sans Tamil", "InaiMathi", "Nirmala UI", "Latha", sans-serif; }
+
+label.check { flex-direction: row; align-items: center; gap: .45rem; font-size: .85rem; color: var(--ink); margin-top: .8rem; }
+label.grow { flex: 1 1 18rem; }
+input[type="url"] {
+  font: inherit; font-size: .9rem; padding: .5rem .65rem; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%;
+}
+.tlabel { font-size: .78rem; color: var(--muted); margin: .2rem 0 .35rem; }
+#originalWrap .tlabel:last-child { margin-top: 1rem; }
+.warn { font-size: .85rem; color: var(--bad); margin: .5rem 0 0; }
+
+.wapanel { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: .9rem; }
+.wapanel h3 { font-size: .9rem; margin: 0; }
+.walist { display: flex; flex-direction: column; gap: .4rem; max-height: 22rem; overflow-y: auto; margin-top: .7rem; }
+.wanote {
+  display: flex; gap: .6rem; align-items: flex-start; padding: .55rem .7rem;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--bg);
+}
+.wanote input { margin-top: .3rem; }
+.wanote label { flex: 1; font-size: .85rem; color: var(--ink); gap: .1rem; }
+.wanote .sub { color: var(--muted); }
+.wanote .ctx { color: var(--muted); font-style: italic; font-size: .8rem; }
+.wanote .playat { margin: .15rem 0 0; }
+
+.conv { color: var(--muted); font-size: .82rem; font-style: italic; }
+.cardsub {
+  font: inherit; font-size: 1.05rem; width: 100%; border: none; border-bottom: 1px solid var(--line);
+  background: transparent; color: var(--ink); padding: 0 0 .3rem; margin-bottom: .6rem;
+}
+.cardsub:focus { outline: none; border-color: var(--accent); }
+.card .original { white-space: pre-wrap; line-height: 1.8; }
+
+.printopts { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: .8rem; }
+.printopts summary { cursor: pointer; font-size: .9rem; font-weight: 550; }
+
 footer { max-width: 56rem; margin: 0 auto; padding: 0 16px 3rem; }
 footer p { color: var(--muted); font-size: .8rem; }
 a { color: var(--accent); }

@@ -19,12 +19,21 @@
     <h2>1. Pick the ear</h2>
     <p class="hint">Whisper runs in this tab. Weights download once from the Hugging Face Hub, then stay in your browser cache. After that, airplane mode works fine.</p>
     <div class="row">
+      <label>She speaks
+        <select id="langSelect">
+          <option value="en" selected>English</option>
+          <option value="hi" lang="hi">हिन्दी Hindi</option>
+          <option value="pa" lang="pa">ਪੰਜਾਬੀ Punjabi</option>
+          <option value="ta" lang="ta">தமிழ் Tamil</option>
+        </select>
+      </label>
       <label>Model
         <select id="modelSelect">
           <option value="Xenova/whisper-tiny.en">whisper-tiny.en — fastest (~40 MB)</option>
           <option value="Xenova/whisper-base.en" selected>whisper-base.en — balanced (~80 MB)</option>
           <option value="Xenova/whisper-small.en">whisper-small.en — most accurate (~250 MB)</option>
           <option value="Xenova/whisper-base">whisper-base — multilingual</option>
+          <option value="Xenova/whisper-small">whisper-small — multilingual, for Hindi, Punjabi and Tamil (~250 MB)</option>
         </select>
       </label>
       <label>Compute
@@ -36,6 +45,8 @@
       </label>
       <button id="loadBtn" class="primary">Load model</button>
     </div>
+    <label class="check" id="bilingualWrap" hidden><input type="checkbox" id="bilingualBox" checked /> Also write it in English, for a bilingual book</label>
+    <p class="hint" id="langHint" hidden></p>
     <div class="progress" id="progressWrap" hidden><div class="bar" id="progressBar"></div><span id="progressText"></span></div>
   </section>
 
@@ -43,9 +54,9 @@
     <h2>2. Feed it a memo</h2>
     <div class="row">
       <label class="filedrop" id="dropZone">
-        <input type="file" id="fileInput" accept="audio/*,video/*" hidden />
-        <strong>Drop a voice memo</strong>
-        <span>.m4a from an iPhone, .mp3, .wav, .ogg, WhatsApp voice notes</span>
+        <input type="file" id="fileInput" accept="audio/*,video/*,.opus,.ogg,.m4a,.zip" hidden />
+        <strong>Drop a voice memo or a WhatsApp chat</strong>
+        <span>.m4a from an iPhone, .mp3, .wav, .opus WhatsApp voice notes, or a whole chat export (.zip)</span>
       </label>
       <div class="or">or</div>
       <div class="reccol">
@@ -53,6 +64,19 @@
         <span class="rectime" id="recTime">00:00</span>
         <button id="demoBtn" class="ghost small">Use the sample memo</button>
       </div>
+    </div>
+    <p class="hint">To export a chat on the phone, open it, tap the name at the top, then Export chat and Attach media. Send the .zip to this computer and drop it here.</p>
+    <div id="waPanel" class="wapanel" hidden>
+      <h3>Voice notes in this chat</h3>
+      <div class="row">
+        <label>From <select id="waSender"></select></label>
+        <span class="stat" id="waStat"></span>
+      </div>
+      <div id="waList" class="walist"></div>
+      <div class="row">
+        <button id="waUseBtn" class="primary" disabled>Use the ticked notes as one memo</button>
+      </div>
+      <p class="hint">One recipe often arrives as three or four notes in a row. Tick them all and they become one memo.</p>
     </div>
     <audio id="player" controls hidden></audio>
     <div class="row">
@@ -64,6 +88,12 @@
   <section class="panel" id="transcriptPanel" hidden>
     <h2>3. What she actually said</h2>
     <p class="hint">Edit freely. Whisper is good, but it has never met your grandmother.</p>
+    <div id="originalWrap" hidden>
+      <label class="tlabel" for="originalBox" id="originalLabel">In her language</label>
+      <textarea id="originalBox" rows="6" spellcheck="false" dir="auto"></textarea>
+      <p class="warn" id="scriptWarn" hidden></p>
+      <label class="tlabel" for="transcriptBox">In English</label>
+    </div>
     <textarea id="transcriptBox" rows="8" spellcheck="false"></textarea>
     <div class="row">
       <label>Structure with
@@ -99,6 +129,21 @@
       <input type="file" id="importInput" accept="application/json" hidden />
       <button id="clearBtn" class="danger">Clear book</button>
     </div>
+    <details class="printopts">
+      <summary>Book settings for printing</summary>
+      <div class="row">
+        <label class="grow">Book title <input type="text" id="bookTitle" /></label>
+        <label>Page size <select id="trimSelect"></select></label>
+      </div>
+      <div class="row">
+        <label class="grow">Web address for the voices, used by the QR codes <input type="url" id="audioBase" placeholder="https://your-site.example/nani/" /></label>
+      </div>
+      <p class="hint">Leave the address empty for a book without QR codes. To add them, export the voice files, put that folder on any web host, paste its address here, then export the printable book again.</p>
+      <div class="row">
+        <button id="exportVoicesBtn" class="ghost">Export voice files for QR codes</button>
+        <span class="stat" id="voicesStat"></span>
+      </div>
+    </details>
   </section>
 </main>
 
