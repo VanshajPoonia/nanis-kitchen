@@ -1,0 +1,30 @@
+[
+  {
+    "id": "hi-kadhi",
+    "lang": "hi",
+    "voice": "Lekha",
+    "text": "आज मैं तुम्हें कढ़ी बनाना सिखाती हूँ। एक कटोरी दही लो और उसमें दो बड़े चम्मच बेसन डालो। एक चुटकी हल्दी और आधा चम्मच नमक मिलाओ। फिर दो गिलास पानी डालकर अच्छे से फेंट लो।",
+    "en": "Today I will teach you how to make kadhi. Take a bowl of curd and add two big spoons of gram flour to it. Mix in a pinch of turmeric and half a spoon of salt. Then add two glasses of water and whisk it well."
+  },
+  {
+    "id": "hi-aloo",
+    "lang": "hi",
+    "voice": "Lekha",
+    "text": "पाव भर आलू उबाल कर छील लो। एक छोटा चम्मच जीरा गरम तेल में डालो। डेढ़ कटोरी चावल धोकर आधे घंटे भिगो दो। मेरी माँ हमेशा कहती थी कि जल्दी में बना खाना जल्दी जैसा ही लगता है।",
+    "en": "Boil a quarter kilo of potatoes and peel them. Put a small spoon of cumin into hot oil. Wash one and a half bowls of rice and soak it for half an hour. My mother always said that food made in a hurry tastes like a hurry."
+  },
+  {
+    "id": "ta-pongal",
+    "lang": "ta",
+    "voice": "Vani",
+    "text": "இன்று பொங்கல் செய்வது எப்படி என்று சொல்கிறேன். ஒரு டம்ளர் அரிசி மற்றும் அரை டம்ளர் பாசிப்பருப்பு எடுத்துக்கொள்ளுங்கள். ஒரு சிட்டிகை உப்பு சேர்க்கவும். ஒரு கைப்பிடி முந்திரியை நெய்யில் வறுக்கவும்.",
+    "en": "Today I will tell you how to make pongal. Take one tumbler of rice and half a tumbler of moong dal. Add a pinch of salt. Fry a handful of cashews in ghee."
+  },
+  {
+    "id": "ta-thalippu",
+    "lang": "ta",
+    "voice": "Vani",
+    "text": "இரண்டு கரண்டி எண்ணெய் ஊற்றி கடுகு போடவும். கால் கிலோ வெங்காயத்தை நறுக்கவும். ஒரு கிண்ணம் தயிர் சேர்த்து நன்றாக கலக்கவும்.",
+    "en": "Pour two spoons of oil and add mustard seeds. Chop a quarter kilo of onions. Add one bowl of curd and mix well."
+  }
+]
