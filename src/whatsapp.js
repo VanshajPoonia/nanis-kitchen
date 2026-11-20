@@ -10,9 +10,22 @@ const ATTACHED_IOS = /<attached:\s*([^>]+)>/i;
 const ATTACHED_ANDROID = /^(\S+\.\w{2,4})\s+\(file attached\)$/i;
 const OMITTED = /^(?:<media omitted>|audio omitted|image omitted|video omitted|sticker omitted|document omitted|gif omitted)$/i;
 
+// WhatsApp's own notices, credited to the chat name on iPhone and to nobody on Android.
+const NOTICE = [
+  /^messages (?:and calls |to this (?:chat|group) )?(?:are|were) (?:now )?(?:end-to-end encrypted|secured)/i,
+  /^missed (?:group )?(?:voice|video) call/i,
+  /^(?:this message was deleted|you deleted this message)\.?$/i,
+  /changed (?:their|his|her) phone number/i,
+  /^your security code with .+ changed/i,
+  /joined using this group'?s invite link\.?$/i,
+  /^waiting for this message/i,
+];
+
+const MARKS = /[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g;
+
 // Direction marks and narrow spaces sneak into exports and break plain regexes.
 function clean(line) {
-  return line.replace(/[‎‏‪-‮⁦-⁩﻿]/g, '').replace(/[  ]/g, ' ');
+  return line.replace(MARKS, '').replace(/[\u202f\u00a0]/g, ' ');
 }
 
 function parseHeader(line) {
@@ -48,10 +61,11 @@ function attachmentOf(text) {
  */
 export function parseChat(text) {
   const raw = [];
-  for (const line of String(text).split(/\r?\n/).map(clean)) {
-    const head = parseHeader(line);
-    if (head) raw.push(head);
-    else if (raw.length) raw[raw.length - 1].text += `\n${line}`;
+  for (const line of String(text).split(/\r?\n/)) {
+    const head = parseHeader(clean(line));
+    // iPhone puts an invisible U+200E right after "Name: " on notices, attachments and omitted media.
+    if (head) raw.push({ ...head, marked: /:\s?\u200e/.test(line) });
+    else if (raw.length) raw[raw.length - 1].text += `\n${clean(line)}`;
   }
   const dayFirst = raw.some((m) => m.a > 12 && m.a <= 31) || !raw.some((m) => m.b > 12);
   let mediaOmitted = 0;
@@ -62,13 +76,17 @@ export function parseChat(text) {
     const rawYear = yearFirst ? m.a : m.year;
     const year = rawYear < 100 ? 2000 + rawYear : rawYear;
     const body = m.text.trim();
-    if (OMITTED.test(body)) mediaOmitted++;
+    const omitted = OMITTED.test(body);
+    if (omitted) mediaOmitted++;
+    const attachment = attachmentOf(body);
+    const system = !m.sender || (m.marked && !attachment && !omitted) || NOTICE.some((re) => re.test(body));
     return {
       date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
       time: to24h(m.time, m.ampm),
-      sender: m.sender,
+      sender: system ? null : m.sender,
       text: body,
-      attachment: attachmentOf(body),
+      attachment,
+      system,
     };
   });
   return { messages, mediaOmitted };
@@ -86,7 +104,7 @@ export function voiceNotes(messages) {
     for (let j = i - 1; j >= 0 && context.length < 2; j--) {
       const prev = messages[j];
       if (prev.date !== m.date) break;
-      if (prev.sender && !prev.attachment && !OMITTED.test(prev.text)) context.unshift(`${prev.sender}: ${prev.text}`);
+      if (!prev.system && !prev.attachment && !OMITTED.test(prev.text)) context.unshift(`${prev.sender}: ${prev.text}`);
     }
     notes.push({ file: m.attachment, sender: m.sender, date: m.date, time: m.time, context });
   });
