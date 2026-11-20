@@ -29,7 +29,7 @@ export const INGREDIENTS = [
   { key: 'maida', density: 0.52, words: ['maida', 'मैदा', 'ਮੈਦਾ', 'மைதா'] },
   { key: 'atta', density: 0.5, words: ['atta', 'aata', 'आटा', 'आटे', 'ਆਟਾ', 'ਆਟੇ', 'மாவு', 'maavu', 'flour'] },
   { key: 'sooji', density: 0.7, words: ['sooji', 'suji', 'rava', 'rawa', 'सूजी', 'रवा', 'ਸੂਜੀ', 'ரவை', 'ravai', 'semolina'] },
-  { key: 'rice', density: 0.8, words: ['chawal', 'chaawal', 'चावल', 'ਚੌਲ', 'ਚਾਵਲ', 'அரிசி', 'arisi', 'rice'] },
+  { key: 'rice', density: 0.8, words: ['chawal', 'chaawal', 'chawlon', 'चावल', 'चावलों', 'ਚੌਲ', 'ਚੌਲਾਂ', 'ਚਾਵਲ', 'அரிசி', 'arisi', 'rice'] },
   { key: 'dal', density: 0.8, words: ['dal', 'daal', 'दाल', 'ਦਾਲ', 'பருப்பு', 'பாசிப்பருப்பு', 'paruppu', 'lentils', 'moong', 'masoor', 'toor'] },
   { key: 'sugar', density: 0.83, words: ['chini', 'cheeni', 'shakkar', 'चीनी', 'शक्कर', 'ਖੰਡ', 'ਚੀਨੀ', 'சர்க்கரை', 'sakkarai', 'sugar'] },
   { key: 'salt', density: 1.2, words: ['namak', 'नमक', 'ਲੂਣ', 'ਨਮਕ', 'உப்பு', 'uppu', 'salt'] },
@@ -60,6 +60,8 @@ const MINUS_QUARTER = nfcSet(['paune', 'पौने', 'ਪੌਣੇ']);
 const SMALL = nfcSet(['chhota', 'chota', 'chhoti', 'choti', 'छोटा', 'छोटी', 'छोटे', 'ਛੋਟਾ', 'ਛੋਟੀ', 'சின்ன', 'small', 'little']);
 const BIG = nfcSet(['bada', 'bara', 'badi', 'bari', 'bade', 'बड़ा', 'बड़ी', 'बड़े', 'ਵੱਡਾ', 'ਵੱਡੀ', 'பெரிய', 'big', 'large', 'heaped']);
 const FULL = nfcSet(['bhar', 'bhara', 'bhari', 'भर', 'भरा', 'ਭਰ', 'ਭਰਿਆ', 'full']);
+// "fresh curd", "ताज़ा दही": skip the adjective and read the ingredient after it.
+const DESCRIPTIVE = nfcSet(['fresh', 'thick', 'sour', 'warm', 'hot', 'cold', 'plain', 'ताज़ा', 'ताजा', 'गाढ़ा', 'खट्टा', 'गरम', 'ठंडा', 'ਤਾਜ਼ਾ', 'ਗਰਮ', 'ਠੰਡਾ', 'புதிய', 'சூடான']);
 const FILLER = nfcSet(['of', 'ka', 'ki', 'ke', 'का', 'की', 'के', 'da', 'di', 'de', 'ਦਾ', 'ਦੀ', 'ਦੇ', 'level', 'about', 'roughly', 'nearly']);
 
 const DIGITS = { '०': 0, '१': 1, '२': 2, '३': 3, '४': 4, '५': 5, '६': 6, '७': 7, '८': 8, '९': 9,
@@ -97,13 +99,24 @@ function unitAt(tokens, i) {
   return UNITS.find((u) => matches(tokens[i].word, u.words)) || null;
 }
 
-function ingredientNear(tokens, from, to) {
-  for (let i = from; i < to && i < tokens.length; i++) {
-    if (i < 0) continue;
-    const found = INGREDIENTS.find((g) => matches(tokens[i].word, g.words));
-    if (found) return found;
+function ingredientOf(token) {
+  return token ? INGREDIENTS.find((g) => matches(token.word, g.words)) || null : null;
+}
+
+// Only the word right after the measure (or right before it) names what is measured.
+// Looking further would turn "a handful of cashews fried in ghee" into a handful of ghee.
+function ingredientAround(tokens, after, before) {
+  let i = after;
+  while (DESCRIPTIVE.has(tokens[i]?.word)) i++;
+  let found = ingredientOf(tokens[i]);
+  if (found) {
+    // "rice flour", "चावल का आटा": any flour weighs about the same as atta.
+    const next = FILLER.has(tokens[i + 1]?.word) ? tokens[i + 2] : tokens[i + 1];
+    const flour = ingredientOf(next);
+    if (found.key !== 'besan' && flour?.key === 'atta') found = flour;
+    return found;
   }
-  return null;
+  return ingredientOf(tokens[before]);
 }
 
 // Reads the quantity in the few words before a unit: "one and a half", "half a", "sava do", "do bade".
@@ -184,16 +197,16 @@ export function findMeasures(text) {
     if (unit.key === 'spoon' && size) ml = (size === 'small' ? 5 : 15) * quantity;
     let after = last + 1;
     while (FILLER.has(tokens[after]?.word)) after++;
-    const ingredient = ingredientNear(tokens, after, after + 3) || ingredientNear(tokens, first - 3, first);
+    const ingredient = ingredientAround(tokens, after, first - 1);
     const grams = unit.grams ? unit.grams * quantity : ml !== null && ingredient ? ml * ingredient.density : null;
     const volume = unit.grams && ingredient ? (unit.grams * quantity) / ingredient.density : ml;
 
     const parts = [];
     if (!unit.exact && volume !== null) parts.push(volumeText(volume));
     if (grams !== null && !(unit.key === 'kilo' && Number.isInteger(quantity))) parts.push(gramsText(grams));
-    // "a bowl" is only a measure when something goes in it: "put it in a bowl" is not.
+    // "a bowl" is only a measure when something goes in it: "a bowl of curd", not "put it in a bowl".
     const articleOnly = ['a', 'an'].includes(tokens[first].word) && first === i - 1;
-    if (!parts.length || (articleOnly && !ingredient)) continue;
+    if (!parts.length || (articleOnly && !ingredient && tokens[last + 1]?.word !== 'of')) continue;
     const note = parts.join(', ');
     found.push({
       words: nfc(String(text)).slice(tokens[first].start, tokens[last].end),

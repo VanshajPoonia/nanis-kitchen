@@ -64,6 +64,14 @@ check('one and a half cups', one('one and a half cups of atta').quantity === 1.5
 check('two cups of atta in grams', one('about two cups of atta').note === 'about 240 g');
 check('exact unit with no known ingredient says nothing', conversionNote('two cups of something') === '');
 
+section('which ingredient is measured');
+check('the word after the measure, not one further on', one('ஒரு கைப்பிடி முந்திரியை நெய்யில் வறுக்கவும்').ingredient === null);
+check('an unknown ingredient still gets a volume', one('a handful of cashews fried in ghee').note === 'about ¼ cup');
+check('skips an adjective', one('ek katori taaza dahi'.replace('taaza', 'fresh')).ingredient === 'curd');
+check('rice flour weighs like flour', one('ek mutthi chawal ka atta').ingredient === 'atta');
+check('besan stays besan', one('do chammach besan ka atta').ingredient === 'besan');
+check('plural forms', one('ਇੱਕ ਮੁੱਠੀ ਚੌਲਾਂ').ingredient === 'rice');
+
 section('things that are not measures');
 check('pav bhaji is food', findMeasures('pav bhaji with butter').length === 0);
 check('a unit with no quantity', findMeasures('put it in a bowl').length === 0);
