@@ -1,5 +1,7 @@
 // Whisper, running in this tab. Open weights, no network after the first load.
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5';
+import { LANGUAGES, isMultilingualModel } from './languages.js';
+import { BLOCK, blockedTokenIds } from './scriptguard.js';
 
 // Let the Hub cache the weights in the browser's Cache Storage so round two is offline.
 env.allowLocalModels = false;
@@ -9,9 +11,15 @@ const SAMPLE_RATE = 16000;
 
 let transcriber = null;
 let loadedKey = '';
+let loadedModel = '';
+const guardCache = new Map();
 
 export function isLoaded(modelId, device) {
   return transcriber !== null && loadedKey === `${modelId}|${device}`;
+}
+
+export function loadedModelId() {
+  return transcriber ? loadedModel : '';
 }
 
 async function pickDevice(requested) {
@@ -43,6 +51,8 @@ export async function loadModel(modelId, requestedDevice, onProgress) {
     progress_callback: onProgress,
   });
   loadedKey = key;
+  loadedModel = modelId;
+  guardCache.clear();
   return { device, reused: false };
 }
 
@@ -85,9 +95,23 @@ function resample(input, from, to) {
   return out;
 }
 
-export async function transcribe(audio, { onChunk } = {}) {
+// Token ids to block so the model writes the right script. Built once per model and language.
+function scriptGuard(key) {
+  if (!BLOCK[key]?.length) return null;
+  if (!guardCache.has(key)) {
+    const ids = blockedTokenIds(transcriber.tokenizer.model.vocab, BLOCK[key]);
+    guardCache.set(key, ids.map((id) => [id]));
+  }
+  return guardCache.get(key);
+}
+
+/**
+ * `language` is a key of LANGUAGES. `task` is 'transcribe' (her words, her script)
+ * or 'translate' (English). English-only models ignore both.
+ */
+export async function transcribe(audio, { onChunk, language = 'en', task = 'transcribe' } = {}) {
   if (!transcriber) throw new Error('Load a model first.');
-  const result = await transcriber(audio, {
+  const options = {
     chunk_length_s: 30,
     stride_length_s: 5,
     return_timestamps: true,
@@ -96,7 +120,14 @@ export async function transcribe(audio, { onChunk } = {}) {
       if (!best) return;
       onChunk(transcriber.tokenizer.decode(best, { skip_special_tokens: true }));
     } : undefined,
-  });
+  };
+  if (isMultilingualModel(loadedModel)) {
+    options.language = LANGUAGES[language].whisper;
+    options.task = task;
+    const guard = scriptGuard(task === 'translate' ? 'translate' : language);
+    if (guard) options.bad_words_ids = guard;
+  }
+  const result = await transcriber(audio, options);
   return {
     text: (result.text || '').trim(),
     // [{ text, timestamp: [start, end] }] — this is what lets a step replay her voice.
