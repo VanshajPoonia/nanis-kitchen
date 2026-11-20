@@ -1,12 +1,11 @@
 // Runs the same Whisper models and settings the app uses, on the clips from prep.mjs.
 // Usage: node evals/asr.mjs <data-dir> <out.json> [model,model]
-// GUARD=1 applies the app's script guard. LANGS=pa,hi limits the languages.
+// LANGS=pa,hi limits the languages. THREADS=4 caps CPU threads.
 // Needs transformers.js in Node: npm i --no-save @huggingface/transformers@3.7.5
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { LANGUAGES } from '../src/languages.js';
-import { BLOCK, blockedTokenIds } from '../src/scriptguard.js';
 import { cer, chrF, scriptShare, wer } from './metrics.mjs';
 
 const [dir, outPath, modelArg] = process.argv.slice(2);
@@ -20,7 +19,6 @@ if (process.env.MODEL_CACHE) env.cacheDir = process.env.MODEL_CACHE;
 
 const langs = process.env.LANGS ? process.env.LANGS.split(',') : null;
 const manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8')).filter((c) => !langs || langs.includes(c.lang));
-const guarded = process.env.GUARD === '1';
 
 // ffmpeg hands back 16 kHz mono float samples for both the FLEURS wavs and the Opus voice notes.
 function load(file) {
@@ -52,23 +50,23 @@ function summarize(rows) {
 }
 
 // Saved after every clip, and picked up again on a rerun, so a crash loses one clip, not the run.
-const rows = existsSync(outPath) ? JSON.parse(readFileSync(outPath, 'utf8')).rows.filter((r) => r.guarded === guarded) : [];
-const save = () => writeFileSync(outPath, JSON.stringify({ date: new Date().toISOString().slice(0, 10), guarded, summary: summarize(rows), rows }, null, 2));
+const rows = existsSync(outPath) ? JSON.parse(readFileSync(outPath, 'utf8')).rows : [];
+const save = () => writeFileSync(outPath, JSON.stringify({ date: new Date().toISOString().slice(0, 10), summary: summarize(rows), rows }, null, 2));
 for (const model of models) {
   if (manifest.every((clip) => rows.some((r) => r.model === model && r.id === clip.id))) continue;
   // q8 is what the app loads on CPU / WASM.
-  const asr = await pipeline('automatic-speech-recognition', model, { dtype: 'q8' });
-  const guard = (key) => (guarded && BLOCK[key].length ? { bad_words_ids: blockedTokenIds(asr.tokenizer.model.vocab, BLOCK[key]).map((id) => [id]) } : {});
+  const threads = Number(process.env.THREADS || 0);
+  const asr = await pipeline('automatic-speech-recognition', model, { dtype: 'q8', ...(threads ? { session_options: { intraOpNumThreads: threads } } : {}) });
   for (const clip of manifest) {
     if (rows.some((r) => r.model === model && r.id === clip.id)) continue;
     const audio = load(clip.file);
     const opts = { language: LANGUAGES[clip.lang].whisper, chunk_length_s: 30, stride_length_s: 5, return_timestamps: true };
     const t0 = performance.now();
-    const native = (await asr(audio, { ...opts, task: 'transcribe', ...guard(clip.lang) })).text.trim();
+    const native = (await asr(audio, { ...opts, task: 'transcribe' })).text.trim();
     const t1 = performance.now();
-    const english = (await asr(audio, { ...opts, task: 'translate', ...guard('translate') })).text.trim();
+    const english = (await asr(audio, { ...opts, task: 'translate' })).text.trim();
     const row = {
-      model, guarded, id: clip.id, source: clip.source, lang: clip.lang,
+      model, id: clip.id, source: clip.source, lang: clip.lang,
       seconds: audio.length / 16000,
       cer: cer(clip.ref, native),
       wer: wer(clip.ref, native),
