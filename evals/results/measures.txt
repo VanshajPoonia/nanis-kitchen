@@ -1,0 +1,5 @@
+hi-kadhi: 5 measures, 4 found in her script, 4 in English
+hi-aloo: 3 measures, 2 found in her script, 2 in English
+ta-pongal: 4 measures, 4 found in her script, 0 in English
+ta-thalippu: 3 measures, 3 found in her script, 3 in English
+total: 13/15 in her script, 9/15 in English
