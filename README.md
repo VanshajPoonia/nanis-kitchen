@@ -47,8 +47,10 @@ dropdown. No closed API lets you make that trade yourself.
 - **Imports WhatsApp.** Drop a whole chat export (.zip) or one shared voice note (.opus). The zip is
   opened in the tab with the browser's own `DecompressionStream`, and the chat text says who sent each
   note and what was asked just before it. Tick three notes in a row and they become one memo.
-- **Hears Hindi, Punjabi and Tamil.** Her words come out in her own script, plus an English version
-  for a bilingual book. How well each language works is measured below. Punjabi is the weak one.
+- **Hears Hindi and Tamil.** Her words come out in her own script, plus an English version for a
+  bilingual book. How well each works is measured below. **Punjabi does not work yet:** Whisper
+  writes no Gurmukhi at all, so for Punjabi you get a rough English version and type her words
+  yourself.
 - **Turns rough measures into cups and grams.** "Ek mutthi chawal" stays as she said it, with
   "about ¼ cup, 50 g" beside it. Katori, chutki, chammach, glass and paav work too, in Roman Hindi,
   Devanagari, Gurmukhi and Tamil.
@@ -107,11 +109,58 @@ transcript of an aloo paratha recipe, and press *Make a recipe card*.
 
 ## Hindi, Punjabi and Tamil
 
-Pick the language she speaks. The app switches to `whisper-small`, the smallest model that writes
-Hindi in Devanagari (see below). Transcription runs twice: once in her language, once with Whisper's
-translate task for the English version. Both boxes stay editable.
+Pick the language she speaks. The app switches to `whisper-small`, because `whisper-base` writes
+Hindi in Urdu letters (see below). Transcription runs twice: once in her language, once with
+Whisper's translate task for the English version. Both boxes stay editable.
 
-<!-- ASR RESULTS -->
+Measured with `evals/asr.mjs` on 2026-11-20, same models and settings as the app, run in Node on CPU.
+Each language had 5 read-speech clips from Google's [FLEURS](https://huggingface.co/datasets/google/fleurs)
+test set, plus synthetic recipe memos: Hindi and Tamil read by macOS voices and squeezed through
+16 kbps Opus like a WhatsApp note. macOS has no Punjabi voice, so Punjabi has FLEURS only.
+
+| whisper-small | Clips | Letters wrong (CER) | Words wrong (WER) | In her own script | English chrF |
+|---|---|---|---|---|---|
+| Hindi, FLEURS | 5 | 0.23 | 0.57 | 100% | 0.43 |
+| Hindi, recipe memos | 2 | 0.15 | 0.49 | 100% | 0.48 |
+| Tamil, FLEURS | 5 | 0.38 (median 0.16) | 0.80 | 100% | 0.24 |
+| Tamil, recipe memos | 2 | 0.14 | 0.49 | 100% | 0.28 |
+| Punjabi, FLEURS | 5 | 2.22 | 5.24 | **0%** | 0.25 |
+
+| whisper-base | Clips | CER | In her own script | English chrF |
+|---|---|---|---|---|
+| Hindi, FLEURS | 5 | 1.60 (median 0.89) | 0%, it writes Urdu letters | 0.31 |
+| Tamil, FLEURS | 5 | 1.14 (median 0.96) | 80% | 0.19 |
+| Punjabi, FLEURS | 5 | 0.92 | 0% | 0.15 |
+
+CER and WER are edit distances against the human transcript, so 0.23 means about one letter in four
+is wrong, and above 1 means the model invented more text than was said. chrF compares the English
+version with FLEURS's human English translation, from 0 to 1. Raw outputs are in
+`evals/results/asr.json`. What that looks like on the recipe memos:
+
+- **Hindi works, with fixing.** Her words: "एक कत्तोरी दही लो और उस में दो बरे चमच भेसन डालो". The
+  spelling is off (कटोरी, बड़े, चम्मच, बेसन) but you can read it. English: "Take a bowl of curd and add
+  2 tbsp of gram flour, 1 pinch of turmeric and half a tsp of salt."
+- **Tamil words are good, Tamil English is not.** Her words came out close to the original. The
+  English for the pongal memo was "Today, we will see how to do the 'Tambler' 'Tambler' is a place
+  where you can get a cup of tea". One FLEURS clip ran on into invented text, which is why the mean
+  CER is far above the median.
+- **Punjabi does not work.** whisper-small wrote no Gurmukhi on any clip. It repeats one symbol
+  until it runs out of room. So the app skips that pass for Punjabi, makes only the English version,
+  says plainly that it is rough, and leaves a box for the family to type her Punjabi words.
+
+Speed on this Mac's CPU with 4 threads, shared with other jobs, was 0.5x to 2x realtime per pass for
+Hindi and Tamil clips. A bilingual memo takes two passes, so a two-minute memo can take several
+minutes. WebGPU in the browser should be faster. That was not measured.
+
+Tried and dropped: blocking wrong-script tokens while Whisper decodes. whisper-small already writes
+Devanagari and Tamil, so the output did not change. For Punjabi it only moved the repeated symbol into
+another script, and it made whisper-base worse. Results are in `evals/results/asr-script-guard.json`,
+and the code is in commit e996e2f.
+
+**Measures in raw transcripts.** Whisper spells by sound, so at first only 4 of the 15 measures in the
+recipe memos were found in its Hindi and Tamil text. Matching on a sound-alike key (कतोरी = कटोरी,
+बरे = बड़े, கின்னம் = கிண்ணம்) found 13 of 15, and 9 of 15 in the English (`evals/measures.mjs`). The
+sound-alike rules were written after looking at these same memos, so this is not an independent test.
 
 ## WhatsApp voice notes
 
@@ -148,7 +197,7 @@ system `zip -9`.
 One cup is 240 ml. Grams come from a rough density for 14 common ingredients (atta, besan,
 rice, dal, sugar, salt, ghee, dahi and so on), and only for the word right next to the measure.
 Numbers like dedh, dhai, sava do and paune do, and Devanagari, Gurmukhi and Tamil digits are read
-too. "Pav bhaji" is not a measure. The printed book opens with this table so nobody has to guess.
+too. "Pav bhaji" is not a measure. A printed book that uses these measures starts with this table, so nobody has to guess.
 
 ## QR codes that play her voice
 
@@ -186,7 +235,7 @@ interior rules before ordering.
 npm test
 ```
 
-167 checks, no model and no browser needed: the spoken-recipe parser, the zip reader and writer,
+169 checks, no model and no browser needed: the spoken-recipe parser, the zip reader and writer,
 iPhone and Android WhatsApp exports, measures in four languages and three scripts, the QR encoder,
 the printed book, the WAV joiner, script detection and the eval metrics.
 
@@ -194,8 +243,9 @@ The speech eval runs the same models and settings as the app, in Node:
 
 ```bash
 npm i --no-save @huggingface/transformers@3.7.5
-node evals/prep.mjs /tmp/recipememo-eval 10     # FLEURS clips + synthetic memos (macOS `say`)
-node evals/asr.mjs /tmp/recipememo-eval evals/results/asr.json
+node evals/prep.mjs /tmp/recipememo-eval 5      # FLEURS clips + synthetic memos (macOS `say`)
+node evals/asr.mjs /tmp/recipememo-eval evals/results/asr.json   # THREADS=4 to go easy on the CPU
+node evals/measures.mjs evals/results/asr.json
 node evals/qr.mjs evals/results/qr.json          # macOS, uses CoreImage
 node evals/sample-book.mjs /tmp/sample.html 8.5x8.5
 ```
@@ -228,7 +278,6 @@ A two-minute memo on `whisper-base.en` takes about 20 seconds on WebGPU and abou
 index.html          single page
 assets/styles.css   light + dark, no framework
 src/asr.js          Whisper pipeline, audio decode, resampling, language and task
-src/scriptguard.js  keeps Hindi in Devanagari and Punjabi in Gurmukhi
 src/recipe.js       spoken-transcript → structured recipe (the interesting file)
 src/measures.js     katori, mutthi, chammach → cups, spoons, grams
 src/zip.js          zip reader and writer, no library
@@ -250,6 +299,9 @@ different languages, and almost all recipe-parsing code assumes the written one.
 - Heavy accents plus kitchen noise will still trip `tiny`. Move up to `small.en`.
 - Ingredient splitting is heuristic. A run-on sentence occasionally produces a run-on line, which is
   why the title is editable and the export is plain Markdown you can fix in ten seconds.
+- Punjabi does not work. Whisper writes no Gurmukhi, and its English for Punjabi is rough.
+- Hindi transcripts get about one letter in four wrong on clean read speech. Kitchen noise will be
+  worse. Tamil English versions are often wrong. Read both before printing.
 - The recipe parser reads English. For Hindi, Punjabi and Tamil it structures the English version and
   prints her own words beside it.
 - Measures are rough on purpose. A katori is whatever bowl she had.
