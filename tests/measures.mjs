@@ -72,6 +72,17 @@ check('rice flour weighs like flour', one('ek mutthi chawal ka atta').ingredient
 check('besan stays besan', one('do chammach besan ka atta').ingredient === 'besan');
 check('plural forms', one('ਇੱਕ ਮੁੱਠੀ ਚੌਲਾਂ').ingredient === 'rice');
 
+section('Whisper spellings, from evals/results');
+check('कत्तोरी is still a katori', one('एक कत्तोरी दही लो').unit === 'bowl');
+check('बरे चमच is a big spoon of भेसन', one('दो बरे चमच भेसन डालो').ml === 30 && one('दो बरे चमच भेसन डालो').ingredient === 'besan');
+check('चोटा चमच is a small spoon', one('एक चोटा चमच जीरा').ml === 5);
+check('आदा is half', one('आदा चमच नमक').quantity === 0.5);
+check('देर is dedh', one('देर कतोरी चाबल').quantity === 1.5 && one('देर कतोरी चाबल').ingredient === 'rice');
+check('கின்னம் is a katori', one('ஒரு கின்னம் தையர்').unit === 'bowl');
+check('கைபிடி is a fistful', one('ஒரு கைபிடி முந்திரியை').unit === 'fistful');
+check('அறை தம்பலர் is half a tumbler', one('அறை தம்பலர் பாசிப்பருப்பு').quantity === 0.5 && one('அறை தம்பலர் பாசிப்பருப்பு').unit === 'tumbler');
+check('original words are kept as written', one('दो बरे चमच भेसन').words === 'दो बरे चमच');
+
 section('things that are not measures');
 check('pav bhaji is food', findMeasures('pav bhaji with butter').length === 0);
 check('a unit with no quantity', findMeasures('put it in a bowl').length === 0);

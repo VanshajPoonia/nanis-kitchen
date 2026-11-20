@@ -4,9 +4,32 @@
 
 export const CUP_ML = 240;
 
-// ड़ can arrive as one code point or two, so every word is compared in NFC.
 const nfc = (s) => s.normalize('NFC');
-const nfcSet = (words) => new Set(words.map(nfc));
+
+// Whisper spells by sound: भेसन for बेसन, कतोरी for कटोरी, बरे for बड़े, கின்னம் for கிண்ணம்.
+// Words are compared on a sound-alike key that folds those pairs together.
+const FOLD = {
+  'ख': 'क', 'घ': 'ग', 'छ': 'च', 'झ': 'ज', 'ठ': 'त', 'ढ': 'द', 'थ': 'त', 'ध': 'द', 'फ': 'प', 'भ': 'ब',
+  'ट': 'त', 'ड': 'द', 'ण': 'न', 'व': 'ब', 'ी': 'ि', 'ू': 'ु', 'ई': 'इ', 'ऊ': 'उ', 'ै': 'े', 'ौ': 'ो',
+  'ਖ': 'ਕ', 'ਘ': 'ਗ', 'ਛ': 'ਚ', 'ਝ': 'ਜ', 'ਠ': 'ਤ', 'ਢ': 'ਦ', 'ਥ': 'ਤ', 'ਧ': 'ਦ', 'ਫ': 'ਪ', 'ਭ': 'ਬ',
+  'ਟ': 'ਤ', 'ਡ': 'ਦ', 'ਣ': 'ਨ', 'ਵ': 'ਬ', 'ੜ': 'ਰ', 'ੀ': 'ਿ', 'ੂ': 'ੁ', 'ਈ': 'ਇ', 'ਊ': 'ਉ', 'ੈ': 'ੇ', 'ੌ': 'ੋ',
+  'ண': 'ன', 'ள': 'ல', 'ற': 'ர', 'ழ': 'ல', 'ட': 'த', 'ீ': 'ி', 'ூ': 'ு', 'ே': 'ெ', 'ோ': 'ொ',
+  'ஈ': 'இ', 'ஊ': 'உ', 'ஏ': 'எ', 'ஓ': 'ஒ',
+};
+// Nukta, virama, nasal marks, Gurmukhi addak and Tamil pulli carry little sound Whisper keeps.
+const DROP = /[\u0901\u0902\u093c\u094d\u0a02\u0a3c\u0a4d\u0a70\u0a71\u0bcd]/g;
+
+export function soundKey(word) {
+  const s = nfc(String(word)).toLowerCase().replace(/[डढ]\u093c/g, 'र').replace(DROP, '');
+  let out = '';
+  for (const ch of s) {
+    const c = FOLD[ch] || ch;
+    // Doubled Indic letters collapse (चम्मच, கைப்பிடி). English spelling is left alone.
+    if (c !== out[out.length - 1] || c < '\u0900') out += c;
+  }
+  return out;
+}
+const keySet = (words) => new Set(words.map(soundKey));
 
 // `ml` for volumes, `grams` for weights. `exact` units are already standard, so only grams are added.
 export const UNITS = [
@@ -17,7 +40,7 @@ export const UNITS = [
   { key: 'teaspoon', label: 'teaspoon', ml: 5, exact: true, words: ['தேக்கரண்டி', 'thekkarandi', 'teaspoon', 'teaspoons', 'tsp'] },
   { key: 'tablespoon', label: 'tablespoon', ml: 15, exact: true, words: ['மேசைக்கரண்டி', 'mesaikarandi', 'tablespoon', 'tablespoons', 'tbsp'] },
   { key: 'glass', label: 'glass', ml: 250, words: ['glass', 'glasses', 'gilas', 'gilaas', 'गिलास', 'ग्लास', 'ਗਲਾਸ', 'ਗਿਲਾਸ'] },
-  { key: 'tumbler', label: 'tumbler', ml: 200, words: ['tumbler', 'tumblers', 'டம்ளர்', 'dumbler'] },
+  { key: 'tumbler', label: 'tumbler', ml: 200, words: ['tumbler', 'tumblers', 'டம்ளர்', 'தம்பளர்', 'dumbler'] },
   { key: 'cup', label: 'cup', ml: CUP_ML, exact: true, words: ['cup', 'cups', 'कप', 'ਕੱਪ', 'கப்'] },
   { key: 'paav', label: 'paav (quarter kilo)', grams: 250, words: ['paav', 'pav', 'paao', 'pao', 'पाव', 'पाओ', 'ਪਾਈਆ', 'paiya'] },
   { key: 'kilo', label: 'kilo', grams: 1000, words: ['kilo', 'kilos', 'kg', 'किलो', 'ਕਿੱਲੋ', 'ਕਿਲੋ', 'கிலோ'] },
@@ -55,27 +78,27 @@ const NUMBERS = {
   oru: 1, onnu: 1, rendu: 2, irandu: 2, moonu: 3, naalu: 4, anju: 5, arai: 0.5, kaal: 0.25, mukkal: 0.75,
 };
 // "sava do" is two and a quarter, "paune do" is one and three quarters.
-const PLUS_QUARTER = nfcSet(['sava', 'सवा', 'ਸਵਾ']);
-const MINUS_QUARTER = nfcSet(['paune', 'पौने', 'ਪੌਣੇ']);
-const SMALL = nfcSet(['chhota', 'chota', 'chhoti', 'choti', 'छोटा', 'छोटी', 'छोटे', 'ਛੋਟਾ', 'ਛੋਟੀ', 'சின்ன', 'small', 'little']);
-const BIG = nfcSet(['bada', 'bara', 'badi', 'bari', 'bade', 'बड़ा', 'बड़ी', 'बड़े', 'ਵੱਡਾ', 'ਵੱਡੀ', 'பெரிய', 'big', 'large', 'heaped']);
-const FULL = nfcSet(['bhar', 'bhara', 'bhari', 'भर', 'भरा', 'ਭਰ', 'ਭਰਿਆ', 'full']);
+const PLUS_QUARTER = keySet(['sava', 'सवा', 'ਸਵਾ']);
+const MINUS_QUARTER = keySet(['paune', 'पौने', 'ਪੌਣੇ']);
+const SMALL = keySet(['chhota', 'chota', 'chhoti', 'choti', 'छोटा', 'छोटी', 'छोटे', 'ਛੋਟਾ', 'ਛੋਟੀ', 'சின்ன', 'small', 'little']);
+const BIG = keySet(['bada', 'bara', 'badi', 'bari', 'bade', 'बड़ा', 'बड़ी', 'बड़े', 'ਵੱਡਾ', 'ਵੱਡੀ', 'பெரிய', 'big', 'large', 'heaped']);
+const FULL = keySet(['bhar', 'bhara', 'bhari', 'भर', 'भरा', 'ਭਰ', 'ਭਰਿਆ', 'full']);
 // "fresh curd", "ताज़ा दही": skip the adjective and read the ingredient after it.
-const DESCRIPTIVE = nfcSet(['fresh', 'thick', 'sour', 'warm', 'hot', 'cold', 'plain', 'ताज़ा', 'ताजा', 'गाढ़ा', 'खट्टा', 'गरम', 'ठंडा', 'ਤਾਜ਼ਾ', 'ਗਰਮ', 'ਠੰਡਾ', 'புதிய', 'சூடான']);
-const FILLER = nfcSet(['of', 'ka', 'ki', 'ke', 'का', 'की', 'के', 'da', 'di', 'de', 'ਦਾ', 'ਦੀ', 'ਦੇ', 'level', 'about', 'roughly', 'nearly']);
+const DESCRIPTIVE = keySet(['fresh', 'thick', 'sour', 'warm', 'hot', 'cold', 'plain', 'ताज़ा', 'ताजा', 'गाढ़ा', 'खट्टा', 'गरम', 'ठंडा', 'ਤਾਜ਼ਾ', 'ਗਰਮ', 'ਠੰਡਾ', 'புதிய', 'சூடான']);
+const FILLER = keySet(['of', 'ka', 'ki', 'ke', 'का', 'की', 'के', 'da', 'di', 'de', 'ਦਾ', 'ਦੀ', 'ਦੇ', 'level', 'about', 'roughly', 'nearly']);
 
 const DIGITS = { '०': 0, '१': 1, '२': 2, '३': 3, '४': 4, '५': 5, '६': 6, '७': 7, '८': 8, '९': 9,
   '੦': 0, '੧': 1, '੨': 2, '੩': 3, '੪': 4, '੫': 5, '੬': 6, '੭': 7, '੮': 8, '੯': 9,
   '௦': 0, '௧': 1, '௨': 2, '௩': 3, '௪': 4, '௫': 5, '௬': 6, '௭': 7, '௮': 8, '௯': 9 };
 
 const TAMIL = /^\p{Script=Tamil}/u;
-for (const list of [UNITS, INGREDIENTS]) for (const item of list) item.words = item.words.map(nfc);
-const NUMBER_OF = new Map(Object.entries(NUMBERS).map(([k, v]) => [nfc(k), v]));
+for (const list of [UNITS, INGREDIENTS]) for (const item of list) item.keys = item.words.map(soundKey);
+const NUMBER_OF = new Map(Object.entries(NUMBERS).map(([k, v]) => [soundKey(k), v]));
 
 function tokenize(text) {
   const tokens = [];
   for (const m of nfc(String(text)).matchAll(/[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N}./]*/gu)) {
-    tokens.push({ word: m[0].replace(/[./]+$/, '').toLowerCase(), start: m.index, end: m.index + m[0].length });
+    tokens.push({ word: soundKey(m[0].replace(/[./]+$/, '')), start: m.index, end: m.index + m[0].length });
   }
   return tokens;
 }
@@ -96,11 +119,11 @@ function matches(word, list) {
 }
 
 function unitAt(tokens, i) {
-  return UNITS.find((u) => matches(tokens[i].word, u.words)) || null;
+  return UNITS.find((u) => matches(tokens[i].word, u.keys)) || null;
 }
 
 function ingredientOf(token) {
-  return token ? INGREDIENTS.find((g) => matches(token.word, g.words)) || null : null;
+  return token ? INGREDIENTS.find((g) => matches(token.word, g.keys)) || null : null;
 }
 
 // Only the word right after the measure (or right before it) names what is measured.
