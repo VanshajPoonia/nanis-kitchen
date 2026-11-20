@@ -2,6 +2,7 @@
 import { failureCount } from './check.mjs';
 import './parser.mjs';
 import './zip.mjs';
+import './whatsapp.mjs';
 
 const failures = failureCount();
 console.log(`\n${failures ? `FAIL: ${failures} check(s) failed` : 'PASS'}`);
