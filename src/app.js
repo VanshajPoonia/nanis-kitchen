@@ -74,7 +74,7 @@ $('loadBtn').addEventListener('click', async () => {
       if (p.status === 'progress' && p.total) {
         const pct = Math.round((p.loaded / p.total) * 100);
         $('progressBar').style.width = `${pct}%`;
-        $('progressText').textContent = `${p.file} — ${pct}%`;
+        $('progressText').textContent = `${p.file}: ${pct}%`;
       } else if (p.status === 'ready') {
         $('progressBar').style.width = '100%';
       }
@@ -125,7 +125,7 @@ async function handleFile(file) {
   try {
     state.decoded = await asr.decodeAudio(buf);
     state.parts = [{ name: file.name, type: file.type || 'audio/ogg', data: file }];
-    $('asrStat').textContent = `${file.name} — ${state.decoded.duration.toFixed(1)}s ready`;
+    $('asrStat').textContent = `${file.name}, ${state.decoded.duration.toFixed(1)}s ready`;
   } catch (err) {
     state.decoded = null;
     $('asrStat').textContent = decodeHelp(err, file.name);
