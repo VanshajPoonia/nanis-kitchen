@@ -2,7 +2,8 @@
 export const LANGUAGES = {
   en: { name: 'English', native: 'English', whisper: 'english', script: 'Latin' },
   hi: { name: 'Hindi', native: 'हिन्दी', whisper: 'hindi', script: 'Devanagari' },
-  pa: { name: 'Punjabi', native: 'ਪੰਜਾਬੀ', whisper: 'punjabi', script: 'Gurmukhi' },
+  // Whisper cannot write Punjabi (see evals/results). The app asks only for the English version.
+  pa: { name: 'Punjabi', native: 'ਪੰਜਾਬੀ', whisper: 'punjabi', script: 'Gurmukhi', writesScript: false },
   ta: { name: 'Tamil', native: 'தமிழ்', whisper: 'tamil', script: 'Tamil' },
 };
 

@@ -25,6 +25,13 @@ const state = {
 
 const SAMPLE_TRANSCRIPT = `Okay, so today I am going to make the aloo paratha the way my mother made it, not the way they sell it in the shops. You need about two cups of atta, that is the wheat flour, and a pinch of salt and some water, warm water, not cold. Also four potatoes, medium size, boiled. One green chilli, finely chopped. A small piece of ginger. Half a teaspoon of ajwain, and salt again for the filling, and ghee, plenty of ghee, do not be shy with it. First knead the dough with the water little by little until it is soft, softer than you think, and then cover it and let it rest for twenty minutes. Mash the potatoes while the dough is resting, there should be no lumps at all. Add the chilli and the ginger and the ajwain and the salt to the potatoes and mix it with your hand, not a spoon, your hand knows when it is right. Take a ball of dough and roll it a little, put a spoon of the filling inside, close it like a purse and press it flat. Roll it gently, if the filling comes out you were too greedy. Heat the tawa on medium, put the paratha on, and when you see small bubbles turn it. Now put ghee on both sides and press the edges with the spatula until it is golden. My mother used to say that a paratha made in a hurry tastes like a hurry. When I was a girl we had no gas, only the coal fire, and she would make fifteen of these before anyone woke up. Serve it hot with curd and pickle, never with a fork.`;
 
+const PUNJABI_NOTE = 'Whisper cannot write Punjabi yet. In our test it wrote no Gurmukhi at all, only one symbol over and over. So RecipeMemo makes just the English version, and that is rough too. Type her Punjabi words in the box above if you want them in the book.';
+const LANGUAGE_HINTS = {
+  hi: 'Hindi needs whisper-small, so it is picked for you. In our test it wrote Devanagari every time but got about one letter in four wrong. Read it through and fix words by hand.',
+  pa: 'Whisper cannot write Punjabi yet. You will get a rough English version and a box to type her Punjabi words yourself.',
+  ta: 'Tamil needs whisper-small, so it is picked for you. Her Tamil words come out fairly well. The English version is weak, so check it by hand.',
+};
+
 const SCRIPT_NAMES = { Arabic: 'Urdu (Arabic) script', Devanagari: 'Devanagari', Gurmukhi: 'Gurmukhi', Tamil: 'Tamil script', Latin: 'English letters' };
 
 function esc(s) {
@@ -45,16 +52,15 @@ function language() {
 function refreshLanguage() {
   const lang = language();
   const L = LANGUAGES[lang];
-  $('bilingualWrap').hidden = lang === 'en';
+  $('bilingualWrap').hidden = lang === 'en' || L.writesScript === false;
   const hint = $('langHint');
   if (lang === 'en') {
     hint.hidden = true;
   } else {
-    if (!isMultilingualModel($('modelSelect').value)) $('modelSelect').value = 'Xenova/whisper-small';
+    // In the eval whisper-base wrote Hindi in Urdu letters and was far worse at Tamil, so small is picked.
+    $('modelSelect').value = 'Xenova/whisper-small';
     hint.hidden = false;
-    hint.textContent = lang === 'pa'
-      ? `${L.name} is Whisper's weakest language of the four. Expect to fix the ${L.native} text by hand. The English version is usually easier to correct.`
-      : `${L.name} needs a multilingual model. whisper-small writes ${L.native} far better than whisper-base, so it is picked for you.`;
+    hint.textContent = LANGUAGE_HINTS[lang];
   }
   refreshTranscribeBtn();
 }
@@ -285,14 +291,18 @@ function refreshTranscribeBtn() {
 $('transcribeBtn').addEventListener('click', async () => {
   const lang = language();
   const L = LANGUAGES[lang];
-  const bilingual = lang !== 'en' && $('bilingualBox').checked;
+  const writesScript = L.writesScript !== false;
+  // Without her own script, the English version is the only thing Whisper can give.
+  const bilingual = lang !== 'en' && ($('bilingualBox').checked || !writesScript);
   $('transcribeBtn').disabled = true;
   $('transcriptPanel').hidden = false;
   $('originalWrap').hidden = lang === 'en';
   $('originalBox').value = '';
   $('originalBox').lang = lang;
   $('originalLabel').textContent = `In ${L.name} (${L.native})`;
-  $('scriptWarn').hidden = true;
+  $('scriptWarn').hidden = writesScript;
+  if (!writesScript) $('scriptWarn').textContent = PUNJABI_NOTE;
+  $('originalBox').placeholder = writesScript ? '' : `Type her words in ${L.native} here if you want them in the book.`;
   $('transcriptBox').value = '';
   $('transcriptBox').placeholder = lang !== 'en' && !bilingual ? 'Type an English version here if you want one in the book.' : '';
   $('asrStat').textContent = 'Listening…';
@@ -303,11 +313,13 @@ $('transcribeBtn').addEventListener('click', async () => {
       state.chunks = result.chunks;
       $('transcriptBox').value = result.text;
     } else {
-      $('asrStat').textContent = `Listening in ${L.name}…`;
-      const native = await asr.transcribe(state.decoded.audio, { language: lang, onChunk: (p) => { $('originalBox').value = p; } });
-      $('originalBox').value = native.text;
-      warnScript(native.text, lang);
       state.chunks = [];
+      if (writesScript) {
+        $('asrStat').textContent = `Listening in ${L.name}…`;
+        const native = await asr.transcribe(state.decoded.audio, { language: lang, onChunk: (p) => { $('originalBox').value = p; } });
+        $('originalBox').value = native.text;
+        warnScript(native.text, lang);
+      }
       if (bilingual) {
         $('asrStat').textContent = 'Now writing it in English…';
         const english = await asr.transcribe(state.decoded.audio, { language: lang, task: 'translate', onChunk: (p) => { $('transcriptBox').value = p; } });
