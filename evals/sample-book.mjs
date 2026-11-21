@@ -1,7 +1,7 @@
 // Writes a three-language sample book for checking print layout and fonts in a real browser.
 // Usage: node evals/sample-book.mjs <out.html> [trim]
-import { writeFileSync } from 'node:fs';
-import { toPrintableHtml } from '../src/book.js';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { bookLanguages, loadBookFonts, toPrintableHtml } from '../src/book.js';
 import { parseRecipe } from '../src/recipe.js';
 
 const [outPath, trim = '6x9'] = process.argv.slice(2);
@@ -23,10 +23,12 @@ const recipes = [
     'ta', 'இன்று பொங்கல் செய்வது எப்படி என்று சொல்கிறேன். ஒரு டம்ளர் அரிசி மற்றும் அரை டம்ளர் பாசிப்பருப்பு எடுத்துக்கொள்ளுங்கள். ஒரு சிட்டிகை உப்பு சேர்க்கவும். ஒரு கைப்பிடி முந்திரியை நெய்யில் வறுக்கவும்.', 'பொங்கல்'),
 ];
 
+const readFont = (name) => new Uint8Array(readFileSync(new URL(`../assets/fonts/${name}`, import.meta.url)));
 const html = toPrintableHtml(recipes, "Nani's Kitchen", {
+  ...(await loadBookFonts(bookLanguages(recipes), readFont)),
   trim,
   audioBase: 'https://example.com/nanis-kitchen/',
   withAudio: new Set(recipes.map((r) => r.id)),
 });
 writeFileSync(outPath, html);
-console.log(`Wrote ${recipes.length} recipes at ${trim} to ${outPath}`);
+console.log(`Wrote ${recipes.length} recipes at ${trim}, ${(html.length / 1024).toFixed(0)} KB with fonts, to ${outPath}`);

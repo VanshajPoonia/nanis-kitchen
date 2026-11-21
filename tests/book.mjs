@@ -32,7 +32,7 @@ check('prints the original language section', square.includes('<div lang="hi"><p
 check('prints the title in her script', square.includes('<p class="orig-title" lang="hi">कढ़ी</p>'));
 check('converts measures beside ingredients', square.includes('ek mutthi chawal <span class="conv">(about ¼ cup, 50 g)</span>'));
 check('lists her measures with conversions', square.includes('<span lang="hi">एक कटोरी</span> <span class="conv">about ⅔ cup, 150 g</span>'));
-check('adds the measure guide', square.includes('How to read the measures') && square.includes('<span lang="pa">ਮੁੱਠੀ</span>'));
+check('adds the measure guide in the book\'s own scripts', square.includes('How to read the measures') && square.includes('<span lang="hi">मुट्ठी</span>') && !square.includes('<span lang="pa">'));
 
 const withQr = toPrintableHtml([hindi, english], undefined, { audioBase: 'https://family.example.com/nani', withAudio: new Set([hindi.id]) });
 check('QR code on a recipe with a voice note', withQr.split('<svg').length === 2);

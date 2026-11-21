@@ -54,7 +54,7 @@ function savedSettings() {
 
 export function loadSettings() {
   const saved = savedSettings();
-  return { title: DEFAULT_TITLE, trim: '6x9', audioBase: '', site: '', ...saved, folder: saved.folder || randomFolder() };
+  return { title: DEFAULT_TITLE, trim: '6x9', audioBase: '', site: '', embedFonts: true, ...saved, folder: saved.folder || randomFolder() };
 }
 
 export function saveSettings(settings) {
@@ -128,19 +128,19 @@ function pageCss(trim) {
 
 const SCRIPT_LANG = [[/^[a-z]/, null], [/\p{Script=Devanagari}/u, 'hi'], [/\p{Script=Gurmukhi}/u, 'pa'], [/\p{Script=Tamil}/u, 'ta']];
 
-// One example per script, so every family finds the word they grew up with.
-function sayings(words) {
-  return SCRIPT_LANG.map(([re, lang]) => {
+// One example per script the book uses, so every family finds the word they grew up with.
+function sayings(words, langs) {
+  return SCRIPT_LANG.filter(([, lang]) => !lang || langs.includes(lang)).map(([re, lang]) => {
     const word = words.find((w) => re.test(w));
     if (!word) return '';
     return lang ? `<span lang="${lang}">${esc(word)}</span>` : esc(word);
   }).filter(Boolean).join(', ');
 }
 
-function measureGuide() {
+function measureGuide(langs) {
   const rows = UNITS.filter((u) => !u.exact && u.key !== 'kilo').map((u) => {
     const amount = u.ml ? volumeText(u.ml) : `${u.grams} g`;
-    return `<tr><td>${esc(u.label)}</td><td>${sayings(u.words)}</td><td>${esc(amount)}</td></tr>`;
+    return `<tr><td>${esc(u.label)}</td><td>${sayings(u.words, langs)}</td><td>${esc(amount)}</td></tr>`;
   });
   return `<section class="guide">
   <h2>How to read the measures</h2>
@@ -188,19 +188,61 @@ function recipePage(r, index, { audioBase, withAudio }) {
   </article>`;
 }
 
+/** Languages other than English that the book prints, so only their fonts are embedded. */
+export function bookLanguages(recipes) {
+  const langs = recipes.map((r) => r.original?.language).filter((l) => l && l !== 'en' && LANGUAGES[l]);
+  return Object.keys(LANGUAGES).filter((l) => langs.includes(l));
+}
+
+/**
+ * Reads the bundled fonts for the given languages. `readFile(name)` returns the bytes of
+ * assets/fonts/<name>, by fetch in the browser or from disk in tests.
+ */
+export async function loadBookFonts(langs, readFile) {
+  if (!langs.length) return { fonts: [], fontLicense: '' };
+  const text = (bytes) => new TextDecoder().decode(bytes);
+  const manifest = JSON.parse(text(await readFile('fonts.json')));
+  const fonts = [];
+  for (const entry of manifest.filter((m) => langs.includes(m.lang))) {
+    for (const [weight, f] of Object.entries(entry.files)) {
+      fonts.push({ family: entry.family, weight: Number(weight), bytes: await readFile(f.file) });
+    }
+  }
+  return { fonts, fontLicense: text(await readFile('OFL.txt')) };
+}
+
+function toBase64(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary);
+}
+
+// Fonts travel inside the book, so every computer prints the same letters. `fonts` is
+// [{ family, weight, bytes }] from assets/fonts, and the OFL text rides along as a comment.
+function embeddedFonts(fonts, license) {
+  if (!fonts?.length) return { css: '', note: '' };
+  const css = fonts.map((f) => `
+  @font-face { font-family: '${f.family}'; font-style: normal; font-weight: ${f.weight}; font-display: block;
+    src: url(data:font/woff2;base64,${toBase64(f.bytes)}) format('woff2'); }`).join('');
+  const families = [...new Set(fonts.map((f) => f.family))].join(', ');
+  const note = `<!--\nFonts embedded in this book: ${families}, from Fontsource.\n${String(license || '').replace(/--/g, '- -')}\n-->`;
+  return { css, note };
+}
+
 /**
  * A print-ready HTML book. Open it in Chrome and save as PDF: the page size comes from the
  * book, margins mirror for binding, and fonts that cover Devanagari, Gurmukhi and Tamil are named.
  */
 export function toPrintableHtml(recipes, title = DEFAULT_TITLE, options = {}) {
-  const { trim = '6x9', audioBase = '', withAudio = new Set() } = options;
+  const { trim = '6x9', audioBase = '', withAudio = new Set(), fonts = [], fontLicense = '' } = options;
+  const embedded = embeddedFonts(fonts, fontLicense);
   const t = TRIM_SIZES[trim] || TRIM_SIZES['6x9'];
   const anyOriginal = recipes.some((r) => r.original?.text);
   const anyMeasure = recipes.some((r) => r.ingredients.some((i) => conversionNote(i.text)) || findMeasures(r.original?.text || '').length);
   const pages = recipes.map((r, i) => recipePage(r, i, { audioBase, withAudio })).join('\n');
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title>
-<style>${pageCss(trim)}${FONTS}
+<style>${pageCss(trim)}${embedded.css}${FONTS}
   body { color: #241c17; line-height: 1.55; font-size: 10.5pt; margin: 0; }
   .title-page { break-after: page; text-align: center; padding-top: 30%; }
   .title-page h1 { font-size: 26pt; margin: 0 0 .4em; }
@@ -238,8 +280,9 @@ export function toPrintableHtml(recipes, title = DEFAULT_TITLE, options = {}) {
   <h1>${esc(title)}</h1>
   <p class="sub">${recipes.length} recipe${recipes.length === 1 ? '' : 's'}, in her own words${anyOriginal ? ' and her own language' : ''}.</p>
 </section>
-${anyMeasure ? measureGuide() : ''}
+${anyMeasure ? measureGuide(bookLanguages(recipes)) : ''}
 ${pages}
+${embedded.note}
 </body></html>`;
 }
 

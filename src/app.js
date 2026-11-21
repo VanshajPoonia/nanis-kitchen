@@ -519,7 +519,14 @@ function settings() {
     audioBase: $('audioBase').value.trim(),
     site: $('hostSite').value.trim(),
     folder: $('familyFolder').textContent,
+    embedFonts: $('embedFonts').checked,
   };
+}
+
+async function readFontFile(name) {
+  const res = await fetch(`assets/fonts/${name}`);
+  if (!res.ok) throw new Error(`${name} returned ${res.status}`);
+  return new Uint8Array(await res.arrayBuffer());
 }
 
 function fileStem() {
@@ -535,8 +542,9 @@ function initSettings() {
   $('audioBase').value = s.audioBase;
   $('hostSite').value = s.site;
   $('familyFolder').textContent = s.folder;
+  $('embedFonts').checked = s.embedFonts;
   book.saveSettings(settings());
-  for (const id of ['bookTitle', 'trimSelect', 'audioBase', 'hostSite']) {
+  for (const id of ['bookTitle', 'trimSelect', 'audioBase', 'hostSite', 'embedFonts']) {
     $(id).addEventListener('change', () => book.saveSettings(settings()));
   }
 }
@@ -561,11 +569,22 @@ $('newFolderBtn').addEventListener('click', () => {
 $('exportMdBtn').addEventListener('click', () => book.download(`${fileStem()}.md`, book.toMarkdown(book.load(), settings().title), 'text/markdown'));
 $('exportHtmlBtn').addEventListener('click', async () => {
   const s = settings();
-  const html = book.toPrintableHtml(book.load(), s.title, { trim: s.trim, audioBase: s.audioBase, withAudio: await voiceIds() });
+  const recipes = book.load();
+  const notes = [];
+  let fonts = {};
+  if (s.embedFonts) {
+    try {
+      fonts = await book.loadBookFonts(book.bookLanguages(recipes), readFontFile);
+    } catch (err) {
+      notes.push(`The bundled fonts did not load (${err.message}), so this book uses the computer's own fonts.`);
+    }
+  }
+  const html = book.toPrintableHtml(recipes, s.title, { trim: s.trim, audioBase: s.audioBase, withAudio: await voiceIds(), ...fonts });
   book.download(`${fileStem()}.html`, html, 'text/html');
   if (s.audioBase && !book.addressHasFolder(s.audioBase, s.folder)) {
-    $('voicesStat').textContent = `The web address does not end in this book's folder, ${s.folder}. The QR codes only work if the voice files are really at that address.`;
+    notes.push(`The web address does not end in this book's folder, ${s.folder}. The QR codes only work if the voice files are really at that address.`);
   }
+  $('bookStat').textContent = notes.join(' ');
 });
 $('exportJsonBtn').addEventListener('click', () => book.download(`${fileStem()}.json`, JSON.stringify(book.load(), null, 2), 'application/json'));
 

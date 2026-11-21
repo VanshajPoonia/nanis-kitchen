@@ -129,12 +129,14 @@
       <input type="file" id="importInput" accept="application/json" hidden />
       <button id="clearBtn" class="danger">Clear book</button>
     </div>
+    <p class="stat" id="bookStat"></p>
     <details class="printopts">
       <summary>Book settings for printing</summary>
       <div class="row">
         <label class="grow">Book title <input type="text" id="bookTitle" /></label>
         <label>Page size <select id="trimSelect"></select></label>
       </div>
+      <label class="check"><input type="checkbox" id="embedFonts" checked /> Put the Hindi, Punjabi and Tamil fonts inside the book, so every computer prints the same letters</label>
       <div class="row">
         <label class="grow">Web address for the voices, used by the QR codes <input type="url" id="audioBase" placeholder="https://your-site.example/nani/" /></label>
       </div>

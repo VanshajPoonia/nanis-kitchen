@@ -237,10 +237,18 @@ Keep **Margins: Default** and turn off **Headers and footers**. The page size co
 
 These are the sizes on Notion Press's [book formats page](https://notionpress.com/resources/book-formats-and-sizes).
 Inside margins are wider than outside ones and swap sides on left and right pages, so text never
-disappears into the spine. Nothing prints to the edge, so no bleed is needed. Devanagari, Gurmukhi
-and Tamil use fonts that ship with macOS and Windows (Kohinoor Devanagari, Mukta Mahee, Tamil Sangam
-MN, Nirmala UI), and Chrome embeds them in the PDF. Check the PDF against your printer's current
-interior rules before ordering.
+disappears into the spine. Nothing prints to the edge, so no bleed is needed. Check the PDF against
+your printer's current interior rules before ordering.
+
+**Fonts travel inside the book.** Noto Serif Devanagari, Noto Serif Gurmukhi and Noto Serif Tamil,
+regular and bold, are bundled in `assets/fonts` from Fontsource 5.3.0 under the SIL Open Font
+License (`assets/fonts/OFL.txt`). Fontsource already splits each font by script, so only the Indic
+glyphs are bundled, 158 KB for all six files. The exported book embeds only the scripts it uses, and
+carries the licence text with them. Measured by `tests/fonts.mjs` on small test books: a Hindi
+book grows from 5 KB to 148 KB, and a book in all three scripts is 222 KB. English-only books embed
+nothing. With the fonts inside, every computer prints the same letters, and Chrome embeds them in
+the PDF. Untick *Put the fonts inside the book* to fall back to the computer's own fonts.
+`npm run fonts` fetches the files again through npm at the pinned versions.
 
 ## Tests and evals
 
@@ -248,9 +256,10 @@ interior rules before ordering.
 npm test
 ```
 
-169 checks, no model and no browser needed: the spoken-recipe parser, the zip reader and writer,
+200 checks, no model and no browser needed: the spoken-recipe parser, the zip reader and writer,
 iPhone and Android WhatsApp exports, measures in four languages and three scripts, the QR encoder,
-the printed book, the WAV joiner, script detection and the eval metrics.
+the printed book and where its voices live, the WAV joiner, script detection, the eval metrics and
+the bundled fonts.
 
 The speech eval runs the same models and settings as the app, in Node:
 
@@ -290,6 +299,8 @@ A two-minute memo on `whisper-base.en` takes about 20 seconds on WebGPU and abou
 ```
 index.html          single page
 assets/styles.css   light + dark, no framework
+assets/fonts/       Noto Serif Devanagari, Gurmukhi and Tamil for the print book, with OFL.txt
+scripts/fonts.mjs   fetches those fonts from npm at pinned versions
 src/asr.js          Whisper pipeline, audio decode, resampling, language and task
 src/recipe.js       spoken-transcript → structured recipe (the interesting file)
 src/measures.js     katori, mutthi, chammach → cups, spoons, grams
@@ -320,8 +331,8 @@ different languages, and almost all recipe-parsing code assumes the written one.
 - Measures are rough on purpose. A katori is whatever bowl she had.
 - The book lives in `localStorage` and the voices in IndexedDB. Export them. JSON export does not
   carry audio, so keep the voice files zip too.
-- Fonts come from the computer that prints. A machine with no Devanagari, Gurmukhi or Tamil font
-  will show boxes.
+- Bundled fonts cover Devanagari, Gurmukhi and Tamil only. Other scripts in a recipe fall back to the
+  computer's own fonts.
 
 ## License
 
