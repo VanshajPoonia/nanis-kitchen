@@ -1,0 +1,53 @@
+[
+  {
+    "lang": "hi",
+    "family": "Noto Serif Devanagari",
+    "package": "@fontsource/noto-serif-devanagari@5.3.0",
+    "files": {
+      "400": {
+        "file": "noto-serif-devanagari-devanagari-400-normal.woff2",
+        "bytes": 50952,
+        "sha256": "e64b3b73131abb4074d4b22453bffe54fe8973fa0ea98a32504570df647b2a0a"
+      },
+      "700": {
+        "file": "noto-serif-devanagari-devanagari-700-normal.woff2",
+        "bytes": 55408,
+        "sha256": "1d1f58114673c792115c90ac21bf211da08fe7f76154c1582ce2d0c7d5b38407"
+      }
+    }
+  },
+  {
+    "lang": "pa",
+    "family": "Noto Serif Gurmukhi",
+    "package": "@fontsource/noto-serif-gurmukhi@5.3.0",
+    "files": {
+      "400": {
+        "file": "noto-serif-gurmukhi-gurmukhi-400-normal.woff2",
+        "bytes": 12596,
+        "sha256": "12239101938b42eb3a61cbb7aa9d2b92851a9bb889f75d30170be44b5b781ea4"
+      },
+      "700": {
+        "file": "noto-serif-gurmukhi-gurmukhi-700-normal.woff2",
+        "bytes": 12912,
+        "sha256": "964bd134b15829379589dc0fc5b98b4212e08267fbe9adaab425b78a4de444a8"
+      }
+    }
+  },
+  {
+    "lang": "ta",
+    "family": "Noto Serif Tamil",
+    "package": "@fontsource/noto-serif-tamil@5.3.0",
+    "files": {
+      "400": {
+        "file": "noto-serif-tamil-tamil-400-normal.woff2",
+        "bytes": 14440,
+        "sha256": "c417cb1d5306d35afc48b03b4264fa5ab4ced24464e8c72bef2e3236a67dee28"
+      },
+      "700": {
+        "file": "noto-serif-tamil-tamil-700-normal.woff2",
+        "bytes": 15008,
+        "sha256": "e8db214a4640e8024b270d2857fccb39dbb087a2d6ead9bde8fafbf1d23aa67a"
+      }
+    }
+  }
+]

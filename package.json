@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8000",
-    "test": "node tests/run.mjs"
+    "test": "node tests/run.mjs",
+    "fonts": "node scripts/fonts.mjs"
   },
   "license": "MIT"
 }
