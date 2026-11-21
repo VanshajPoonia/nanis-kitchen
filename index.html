@@ -157,6 +157,7 @@
           <li>Buy a domain and add it to a free Cloudflare account. Use one address, such as recipes.your-domain.com, for every family.</li>
           <li>Type that address here and press <b>Use this site</b>. The web address above becomes the site plus this book's folder.
             <div class="row"><label class="grow">Your site <input type="text" id="hostSite" placeholder="recipes.your-domain.com" autocomplete="off" /></label><button id="useSiteBtn" class="ghost">Use this site</button></div>
+            <span class="stat" id="siteStat" aria-live="polite"></span>
           </li>
           <li>Press <b>Export voice files for QR codes</b> and unzip it. Keep every family's folder together in one site folder on your computer.</li>
           <li>In Cloudflare, open Workers &amp; Pages, create a Pages project, choose <b>Upload assets</b> and drag in the whole site folder. Each upload replaces the whole site, so always upload every family's folder together. Drag and drop takes up to 1,000 files. Cloudflare's Wrangler tool takes up to 20,000.</li>

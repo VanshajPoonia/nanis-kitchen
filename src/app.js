@@ -553,9 +553,9 @@ $('useSiteBtn').addEventListener('click', () => {
   try {
     $('audioBase').value = book.siteAddress($('hostSite').value, settings().folder);
     book.saveSettings(settings());
-    $('voicesStat').textContent = 'Address set. Export the voice files, upload them there, then export the printable book.';
+    $('siteStat').textContent = 'Address set. Export the voice files, upload them there, then export the printable book.';
   } catch (err) {
-    $('voicesStat').textContent = err.message;
+    $('siteStat').textContent = err.message;
   }
 });
 
@@ -563,7 +563,7 @@ $('newFolderBtn').addEventListener('click', () => {
   $('familyFolder').textContent = book.randomFolder();
   if ($('hostSite').value.trim()) $('useSiteBtn').click();
   book.saveSettings(settings());
-  $('voicesStat').textContent = 'New folder name. Books already printed keep pointing at the old one.';
+  $('siteStat').textContent = 'New folder name. Books already printed keep pointing at the old one.';
 });
 
 $('exportMdBtn').addEventListener('click', () => book.download(`${fileStem()}.md`, book.toMarkdown(book.load(), settings().title), 'text/markdown'));
