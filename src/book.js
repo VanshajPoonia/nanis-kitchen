@@ -44,13 +44,17 @@ export function remove(id) {
   return all;
 }
 
-export function loadSettings() {
-  const defaults = { title: DEFAULT_TITLE, trim: '6x9', audioBase: '' };
+function savedSettings() {
   try {
-    return { ...defaults, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+    return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
   } catch {
-    return defaults;
+    return {};
   }
+}
+
+export function loadSettings() {
+  const saved = savedSettings();
+  return { title: DEFAULT_TITLE, trim: '6x9', audioBase: '', site: '', ...saved, folder: saved.folder || randomFolder() };
 }
 
 export function saveSettings(settings) {
@@ -66,6 +70,27 @@ export function toMarkdown(recipes, title = DEFAULT_TITLE) {
 }
 
 /* ---------- voice links ---------- */
+
+// No l, o, 0 or 1, so a folder name read off a screen is not misread. 16 letters is 80 random bits.
+const FOLDER_LETTERS = 'abcdefghijkmnpqrstuvwxyz23456789';
+
+export function randomFolder() {
+  return `f-${[...crypto.getRandomValues(new Uint8Array(16))].map((b) => FOLDER_LETTERS[b % 32]).join('')}`;
+}
+
+export const PLACEHOLDER_SITE = 'recipes.your-domain.com';
+
+// "recipes.example.org" plus a family folder becomes the address the QR codes point to.
+export function siteAddress(site, folder) {
+  const host = String(site || '').trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
+  if (!host || /your-domain|your-project/.test(host)) throw new Error('Type your own site first, for example the address Cloudflare gave you.');
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host)) throw new Error(`"${site}" does not look like a web address.`);
+  return `https://${host}/${folder}/`;
+}
+
+export function addressHasFolder(base, folder) {
+  return String(base || '').split('#')[0].replace(/\/?$/, '/').endsWith(`/${folder}/`);
+}
 
 // Short and stable, so the printed QR codes stay small. Imported recipes may have no id.
 export function audioSlug(recipe, index = 0) {
@@ -232,7 +257,7 @@ function extensionOf(part) {
  * The QR code for a recipe points at <base>/#<slug>, so any web host works and no server code is needed.
  * `audio` maps recipe id to [{ name, type, data: Uint8Array }].
  */
-export function buildVoiceSite(recipes, audio, title = DEFAULT_TITLE) {
+export function buildVoiceSite(recipes, audio, title = DEFAULT_TITLE, { folder = '' } = {}) {
   const files = [];
   const manifest = [];
   recipes.forEach((r, i) => {
@@ -247,7 +272,12 @@ export function buildVoiceSite(recipes, audio, title = DEFAULT_TITLE) {
     manifest.push({ slug, title: r.title, titleOriginal: r.titleOriginal || '', language: r.original?.language || 'en', parts: paths });
   });
   files.unshift({ name: 'index.html', data: playerPage(manifest, title) });
-  return { files, count: manifest.length };
+  if (!folder) return { files, count: manifest.length };
+  // One folder per family, plus a Cloudflare Pages rule asking search engines to stay away.
+  return {
+    files: [{ name: '_headers', data: '/*\n  X-Robots-Tag: noindex, nofollow\n' }, ...files.map((f) => ({ ...f, name: `${folder}/${f.name}` }))],
+    count: manifest.length,
+  };
 }
 
 function playerPage(manifest, title) {

@@ -513,7 +513,13 @@ async function renderBook() {
 }
 
 function settings() {
-  return { title: $('bookTitle').value.trim() || book.DEFAULT_TITLE, trim: $('trimSelect').value, audioBase: $('audioBase').value.trim() };
+  return {
+    title: $('bookTitle').value.trim() || book.DEFAULT_TITLE,
+    trim: $('trimSelect').value,
+    audioBase: $('audioBase').value.trim(),
+    site: $('hostSite').value.trim(),
+    folder: $('familyFolder').textContent,
+  };
 }
 
 function fileStem() {
@@ -527,16 +533,39 @@ function initSettings() {
   $('bookTitle').value = s.title;
   $('trimSelect').value = s.trim;
   $('audioBase').value = s.audioBase;
-  for (const id of ['bookTitle', 'trimSelect', 'audioBase']) {
+  $('hostSite').value = s.site;
+  $('familyFolder').textContent = s.folder;
+  book.saveSettings(settings());
+  for (const id of ['bookTitle', 'trimSelect', 'audioBase', 'hostSite']) {
     $(id).addEventListener('change', () => book.saveSettings(settings()));
   }
 }
+
+$('useSiteBtn').addEventListener('click', () => {
+  try {
+    $('audioBase').value = book.siteAddress($('hostSite').value, settings().folder);
+    book.saveSettings(settings());
+    $('voicesStat').textContent = 'Address set. Export the voice files, upload them there, then export the printable book.';
+  } catch (err) {
+    $('voicesStat').textContent = err.message;
+  }
+});
+
+$('newFolderBtn').addEventListener('click', () => {
+  $('familyFolder').textContent = book.randomFolder();
+  if ($('hostSite').value.trim()) $('useSiteBtn').click();
+  book.saveSettings(settings());
+  $('voicesStat').textContent = 'New folder name. Books already printed keep pointing at the old one.';
+});
 
 $('exportMdBtn').addEventListener('click', () => book.download(`${fileStem()}.md`, book.toMarkdown(book.load(), settings().title), 'text/markdown'));
 $('exportHtmlBtn').addEventListener('click', async () => {
   const s = settings();
   const html = book.toPrintableHtml(book.load(), s.title, { trim: s.trim, audioBase: s.audioBase, withAudio: await voiceIds() });
   book.download(`${fileStem()}.html`, html, 'text/html');
+  if (s.audioBase && !book.addressHasFolder(s.audioBase, s.folder)) {
+    $('voicesStat').textContent = `The web address does not end in this book's folder, ${s.folder}. The QR codes only work if the voice files are really at that address.`;
+  }
 });
 $('exportJsonBtn').addEventListener('click', () => book.download(`${fileStem()}.json`, JSON.stringify(book.load(), null, 2), 'application/json'));
 
@@ -557,9 +586,10 @@ $('exportVoicesBtn').addEventListener('click', async () => {
     $('voicesStat').textContent = 'No saved voice notes yet. Recipes made from a memo or WhatsApp note keep theirs.';
     return;
   }
-  const site = book.buildVoiceSite(recipes, audio, settings().title);
+  const s = settings();
+  const site = book.buildVoiceSite(recipes, audio, s.title, { folder: s.folder });
   book.download(`${fileStem()}-voices.zip`, writeZip(site.files), 'application/zip');
-  $('voicesStat').textContent = `${site.count} recording${site.count === 1 ? '' : 's'} plus a player page. Unzip, upload the folder, then paste its address above.`;
+  $('voicesStat').textContent = `${site.count} recording${site.count === 1 ? '' : 's'} plus a player page, inside the folder ${s.folder}. See "Where to host the voices" below.`;
 });
 
 $('importBtn').addEventListener('click', () => $('importInput').click());

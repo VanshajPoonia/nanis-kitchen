@@ -176,6 +176,11 @@ input[type="url"] {
 
 .printopts { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: .8rem; }
 .printopts summary { cursor: pointer; font-size: .9rem; font-weight: 550; }
+.hostguide { margin-top: 1rem; font-size: .88rem; }
+.hostguide h4 { font-size: .85rem; margin: 1rem 0 .3rem; }
+.hostguide ol { padding-left: 1.2rem; margin: 0; }
+.hostguide li { margin-bottom: .45rem; }
+.hostguide code { font-size: .82rem; background: var(--accent-soft); padding: .05rem .35rem; border-radius: 4px; word-break: break-all; }
 
 footer { max-width: 56rem; margin: 0 auto; padding: 0 16px 3rem; }
 footer p { color: var(--muted); font-size: .8rem; }

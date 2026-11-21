@@ -202,9 +202,22 @@ too. "Pav bhaji" is not a measure. A printed book that uses these measures start
 ## QR codes that play her voice
 
 *Export voice files for QR codes* downloads a zip with one small player page and the original
-recordings. Put that folder on any static host, paste its address into the book settings, and export
-the book again. Each recipe page then carries a QR code for `<address>/#<recipe id>`, which opens
-the player and plays her voice. The player page asks search engines not to index it.
+recordings. They sit in a folder with a long random name, one per family, like
+`f-k3m9q2…`, so nobody can guess another family's address. Put the unzipped folder on any static
+host, set the book's web address, and export the book again. Each recipe page then carries a QR code
+for `<address>/#<recipe id>`, which opens the player and plays her voice. The player page and a
+Cloudflare `_headers` file both ask search engines not to index it.
+
+The book settings include a short **Where to host the voices** guide:
+
+- **For a printed gift book:** your own domain, such as `recipes.your-domain.com`, on Cloudflare
+  Pages, with every family's folder under it. Owning the domain means the printed codes keep working
+  if you ever move hosts.
+- **For a family doing it free:** a Cloudflare Pages project with drag-and-drop upload and its
+  `your-project.pages.dev` address.
+
+Type the site and press *Use this site*, and the web address becomes `https://<site>/<folder>/`.
+The app refuses the placeholder domain and warns if the address does not end in the book's folder.
 
 The QR encoder is written from the spec in `src/qr.js` (byte mode, error correction level M, which
 survives about 15% damage). Tests pin it against the spec's Reed-Solomon, format and version values.

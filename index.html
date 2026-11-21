@@ -138,11 +138,35 @@
       <div class="row">
         <label class="grow">Web address for the voices, used by the QR codes <input type="url" id="audioBase" placeholder="https://your-site.example/nani/" /></label>
       </div>
-      <p class="hint">Leave the address empty for a book without QR codes. To add them, export the voice files, put that folder on any web host, paste its address here, then export the printable book again.</p>
+      <p class="hint">Leave the address empty for a book without QR codes. To add them, follow "Where to host the voices" below, then export the printable book again.</p>
       <div class="row">
         <button id="exportVoicesBtn" class="ghost">Export voice files for QR codes</button>
         <span class="stat" id="voicesStat"></span>
       </div>
+      <details class="hostguide">
+        <summary>Where to host the voices</summary>
+        <p>The QR codes are printed, so their address has to keep working for years. Each family's recordings go in their own folder with a long random name, so nobody can guess another family's address.</p>
+        <div class="row">
+          <span class="stat">This book's folder: <code id="familyFolder"></code></span>
+          <button id="newFolderBtn" class="ghost small">New folder name</button>
+        </div>
+        <h4>For a printed gift book: your own domain</h4>
+        <ol>
+          <li>Buy a domain and add it to a free Cloudflare account. Use one address, such as recipes.your-domain.com, for every family.</li>
+          <li>Type that address here and press <b>Use this site</b>. The web address above becomes the site plus this book's folder.
+            <div class="row"><label class="grow">Your site <input type="text" id="hostSite" placeholder="recipes.your-domain.com" autocomplete="off" /></label><button id="useSiteBtn" class="ghost">Use this site</button></div>
+          </li>
+          <li>Press <b>Export voice files for QR codes</b> and unzip it. Keep every family's folder together in one site folder on your computer.</li>
+          <li>In Cloudflare, open Workers &amp; Pages, create a Pages project, choose <b>Upload assets</b> and drag in the whole site folder. Each upload replaces the whole site, so always upload every family's folder together. Drag and drop takes up to 1,000 files. Cloudflare's Wrangler tool takes up to 20,000.</li>
+          <li>In the project's <b>Custom domains</b> tab, connect recipes.your-domain.com.</li>
+          <li>Export the printable book and scan one QR code with a phone before printing.</li>
+        </ol>
+        <h4>For a family doing it themselves, for free</h4>
+        <ol>
+          <li>Make a free Cloudflare account. In Workers &amp; Pages, create a Pages project, choose <b>Upload assets</b> and drag in the unzipped voice folder.</li>
+          <li>Cloudflare gives an address like your-project.pages.dev. Type it in <b>Your site</b> above, press <b>Use this site</b>, and export the printable book again.</li>
+        </ol>
+      </details>
     </details>
   </section>
 </main>

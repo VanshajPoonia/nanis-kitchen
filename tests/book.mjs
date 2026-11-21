@@ -1,5 +1,5 @@
 // The printed book and the hostable voice files are plain strings and bytes, so they test without a browser.
-import { audioSlug, buildVoiceSite, toMarkdown, toPrintableHtml, voiceUrl } from '../src/book.js';
+import { addressHasFolder, audioSlug, buildVoiceSite, randomFolder, siteAddress, toMarkdown, toPrintableHtml, voiceUrl } from '../src/book.js';
 import { check, section } from './check.mjs';
 
 const hindi = {
@@ -59,6 +59,24 @@ const script = page.slice(page.lastIndexOf('<script>') + 8, page.lastIndexOf('</
 let syntax = '';
 try { new Function(script); } catch (err) { syntax = err.message; }
 check('player script is valid JavaScript', syntax === '', syntax);
+
+section('where the voices live');
+const folder = randomFolder();
+check('family folder is long and random', /^f-[a-z2-9]{16}$/.test(folder) && folder !== randomFolder(), folder);
+check('site plus folder makes the address', siteAddress('Recipes.Example.org', 'f-abc') === 'https://recipes.example.org/f-abc/');
+check('a pasted https address and path are trimmed', siteAddress('https://my-book.pages.dev/old/', 'f-abc') === 'https://my-book.pages.dev/f-abc/');
+let placeholder = '';
+try { siteAddress('recipes.your-domain.com', 'f-abc'); } catch (err) { placeholder = err.message; }
+check('the placeholder is never used as a real site', placeholder.includes('your own site'));
+let junk = '';
+try { siteAddress('my grandma', 'f-abc'); } catch (err) { junk = err.message; }
+check('rejects text that is not a web address', junk.includes('does not look like'));
+check('knows when the address ends in the family folder', addressHasFolder('https://x.org/f-abc', 'f-abc') && !addressHasFolder('https://x.org/', 'f-abc'));
+const nested = buildVoiceSite([hindi], audio, 'Our book', { folder: 'f-abc' });
+const nestedNames = nested.files.map((f) => f.name);
+check('voice files sit inside the family folder', nestedNames.join() === '_headers,f-abc/index.html,f-abc/audio/3f9a2c1e-1.opus,f-abc/audio/3f9a2c1e-2.m4a', nestedNames.join());
+check('the site asks search engines not to index it', nested.files[0].data.includes('X-Robots-Tag: noindex'));
+check('the QR link reaches the player inside the folder', voiceUrl(siteAddress('recipes.example.org', 'f-abc'), hindi) === 'https://recipes.example.org/f-abc/#3f9a2c1e');
 
 section('markdown');
 const md = toMarkdown([hindi]);
