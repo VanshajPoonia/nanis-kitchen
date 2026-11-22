@@ -113,7 +113,7 @@ const FONTS = `
   body { font-family: Georgia, 'Iowan Old Style', 'Noto Serif', serif; }
   :lang(hi) { font-family: 'Noto Serif Devanagari', 'Kohinoor Devanagari', 'Devanagari Sangam MN', 'ITF Devanagari', 'Nirmala UI', 'Mangal', serif; }
   :lang(pa) { font-family: 'Noto Serif Gurmukhi', 'Noto Sans Gurmukhi', 'Mukta Mahee', 'Gurmukhi Sangam MN', 'Gurmukhi MN', 'Nirmala UI', 'Raavi', sans-serif; }
-  :lang(ta) { font-family: 'Noto Serif Tamil', 'Noto Sans Tamil', 'Tamil Sangam MN', 'InaiMathi', 'Tamil MN', 'Nirmala UI', 'Latha', serif; }`;
+  :lang(ta) { font-family: 'Noto Serif Tamil', Georgia, 'Noto Sans Tamil', 'Tamil Sangam MN', 'InaiMathi', 'Tamil MN', 'Nirmala UI', 'Latha', serif; }`;
 
 function pageCss(trim) {
   const t = TRIM_SIZES[trim] || TRIM_SIZES['6x9'];
