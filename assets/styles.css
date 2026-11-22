@@ -59,10 +59,10 @@ h1 { font-size: 1.6rem; margin: 0; letter-spacing: -.02em; }
 .empty { color: var(--muted); font-size: .9rem; font-style: italic; }
 
 .row { display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; margin-top: .8rem; }
-label { display: flex; flex-direction: column; gap: .3rem; font-size: .78rem; color: var(--muted); }
+label { display: flex; flex-direction: column; gap: .3rem; max-width: 100%; font-size: .78rem; color: var(--muted); }
 select, input[type="text"] {
   font: inherit; font-size: .9rem; padding: .5rem .65rem; border-radius: 9px;
-  border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink); max-width: 100%;
 }
 textarea {
   width: 100%; font: inherit; font-size: .93rem; line-height: 1.7; padding: .9rem 1rem;
